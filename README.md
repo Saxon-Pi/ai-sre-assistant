@@ -1,14 +1,34 @@
-# Welcome to your CDK TypeScript project
+# AI SRE (Site Reliability Engineering) アシスタント  
+システムのエラー発生時に LLM に SRE 思考プロセスを踏ませて、原因分析 & 取るべきアクションを提示させるシステム 
+1. 事実整理  
+2. 仮説生成  
+3. 検証  
+4. 結論  
+5. 次アクション提示  
 
-This is a blank project for CDK development with TypeScript.
+## アーキテクチャイメージ
+```mermaid
+flowchart TD
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+subgraph Application
+    APIGW[API Gateway]
+    LAMBDA[Lambda]
+    DDB[DynamoDB]
+end
 
-## Useful commands
+APIGW --> LAMBDA
+LAMBDA --> DDB
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `npx cdk deploy`  deploy this stack to your default AWS account/region
-* `npx cdk diff`    compare deployed stack with current state
-* `npx cdk synth`   emits the synthesized CloudFormation template
+LAMBDA -->|Error Logs| CWL[CloudWatch Logs]
+CWL -->|Subscription Filter| LogsLambda[Log Ingest Lambda]
+
+LogsLambda --> IncidentTable[DynamoDB Incident Table]
+LogsLambda --> AnalyzerLambda[AI Analysis Lambda]
+
+AnalyzerLambda -->|Invoke Model| Bedrock[Amazon Bedrock]
+AnalyzerLambda -->|Query Metrics| CloudWatchMetrics[CloudWatch GetMetricData]
+AnalyzerLambda -->|Similar Incident Search| OpenSearch[(Vector Store)]
+
+AnalyzerLambda --> SlackNotifier[Slack Notifier Lambda]
+SlackNotifier --> Slack[Slack Channel]
+```
