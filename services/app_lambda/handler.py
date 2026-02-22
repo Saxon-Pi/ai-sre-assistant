@@ -4,14 +4,14 @@ import time
 import boto3
 from botocore.exceptions import ClientError
 
-dynamodb = boto3.resource("dynamodb")
-table = dynamodb.Table(os.environ["TABLE_NAME"])
-
 """
 LLM によるエラー分析デモ用にエラーを簡単に発生させるための API
 API Gateway から GET /demo?mode=timeout|iam|conditional|ok を叩くことで、
 App Lambda 内で タイムアウト/例外/権限エラー/正常応答 を引き起こすことができる
 """
+
+dynamodb = boto3.resource("dynamodb")
+table = dynamodb.Table(os.environ["TABLE_NAME"])
 
 def handler(event, context):
     qs = event.get("queryStringParameters") or {}
