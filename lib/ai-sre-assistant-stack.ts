@@ -34,11 +34,20 @@ export class AiSreAssistantStack extends cdk.Stack {
     table.grantReadWriteData(appFn);
 
     // App Lambda ロググループ (サブスクリプションフィルタと確実に連携するため明示)
+    /*
     const appLogGroup = new logs.LogGroup(this, "AppLambdaLogGroup", {
       logGroupName: `/aws/lambda/${appFn.functionName}`,
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
+    */
+   
+    // 既存ロググループを参照
+    const appLogGroup = logs.LogGroup.fromLogGroupName(
+      this,
+      "AppLambdaLogGroup",
+      `/aws/lambda/${appFn.functionName}`
+    );
 
     // API Gateway
     const api = new apigw.RestApi(this, "DemoApi", {
