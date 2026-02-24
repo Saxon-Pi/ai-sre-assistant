@@ -24,7 +24,7 @@ export class AiSreAssistantStack extends cdk.Stack {
     const appFn = new lambda.Function(this, "AppLambda", {
       runtime: lambda.Runtime.PYTHON_3_12,
       handler: "handler.handler",
-      code: lambda.Code.fromAsset(path.join(__dirname, "../../services/app_lambda")),
+      code: lambda.Code.fromAsset(path.join(__dirname, "../services/app_lambda")),
       environment: {
         TABLE_NAME: table.tableName,
       },
@@ -60,11 +60,10 @@ export class AiSreAssistantStack extends cdk.Stack {
     const ingestFn = new lambda.Function(this, "LogIngestLambda", {
       runtime: lambda.Runtime.PYTHON_3_12,
       handler: "handler.handler",
-      code: lambda.Code.fromAsset(path.join(__dirname, "../../services/ingest_lambda")),
+      code: lambda.Code.fromAsset(path.join(__dirname, "../services/ingest_lambda")),
       environment: {
         SLACK_WEBHOOK_SECRET_NAME: "slack/webhook/ai-sre-assistant",
         BEDROCK_MODEL_ID: process.env.BEDROCK_MODEL_ID ?? "anthropic.claude-3-haiku-20240307-v1:0",
-        AWS_REGION: cdk.Stack.of(this).region,
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 512,

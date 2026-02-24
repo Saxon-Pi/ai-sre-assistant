@@ -146,7 +146,6 @@ def _post_to_slack(text: str) -> None:
     with urllib.request.urlopen(req, timeout=10) as res:
         res.read()
 
-
 def handler(event, context):
     # エラーログの取得
     payload = _decode_cwl_payload(event)
@@ -163,3 +162,31 @@ def handler(event, context):
     hypos = analysis.get("hypotheses", [])                                  # エラー原因の仮説
     actions = analysis.get("recommended_actions", [])                       # 検証・解決の具体的アクション
 
+    # Slack 通知
+    # 推論結果の要素ごとにテキスト整形
+    msg = []
+    msg.append(f"*AI SRE Assistant*  [{severity}]")
+    msg.append(f"LogGroup: `{log_group}`")
+    msg.append(f"LogStream: `{log_stream}`")
+    
+    if summary:
+        msg.append(f"\n*Summary*\n{summary}")
+
+    if facts:
+        msg.append("\n*Facts*")
+        for k, v in facts.items():
+            msg.append(f"• {k}: {v}")
+
+    if hypos:
+        msg.append("\n*Hypotheses*")
+        for h in hypos[:3]:
+            msg.append(f"• {h.get('title','')} ({h.get('confidence',0)}): {h.get('reasoning','')}")
+
+    if actions:
+        msg.append("\n*Recommended actions*")
+        for a in actions[:5]:
+            msg.append(f"• [{a.get('priority','medium')}] {a.get('action','')}")
+
+    _post_to_slack("\n".join(msg))
+
+    return {"ok": True}
