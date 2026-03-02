@@ -63,25 +63,26 @@ def _extract_messages(payload: Dict[str, Any], max_lines: int = 30) -> List[str]
 def _invoke_bedrock(log_lines: List[str]) -> Dict[str, Any]:
     prompt = f"""
 あなたはSREのインシデント一次切り分けアシスタントです。
-以下のCloudWatchログを分析し、事実→仮説→推奨アクションを構造化してください。
+以下のCloudWatchログ行を分析し、指定されたJSONスキーマで出力してください。
 
-出力ルール:
-Output Rules (Format Constraints - English):
-- Return ONLY valid JSON (no markdown, no extra text).
-- hypotheses must be at most 3 items.
-- confidence must be an integer between 0 and 100.
+【重要: 出力言語】
+- summary / reasoning / action など、人が読む文章は必ず日本語で書いてください。
+- AWSサービス名、API名、例外クラス名、メトリクス名、ログの引用は英語のまま保持してください。
+- 技術識別子（例: DynamoDB, AccessDeniedException, ProvisionedThroughputExceededException, RequestId）は翻訳しないでください。
+- もし英語の説明文が混ざった場合、その回答は不正です（技術識別子・ログ引用は除く）。
+- Do NOT translate exception class names such as ConditionalCheckFailed, AccessDeniedException, ProvisionedThroughputExceededException.
+- Exception names must remain exactly as they appear in logs.
 
-Language Rules:
-- All explanatory sentences must be written in Japanese.
-- Keep AWS service names, exception names, and metric names in original English.
-- Do NOT translate technical identifiers.
+【重要: フォーマット制約】
+- Return ONLY valid JSON. No markdown. No extra text.
+- JSONの先頭は必ず "{" で開始し、末尾は "}" で終了してください。
 
-Content Rules:
-- Do NOT invent facts.
-- In "facts", include only information directly observable from logs.
-- "summary" must be concise (2–3 sentences).
+【重要: 内容制約】
+- facts にはログから直接観測できる事実のみを書いてください（推測は禁止）。
+- hypotheses は最大3つ。confidence は 0〜100 の整数。
+- summary は 2〜3 文で簡潔に。
 
-Output JSON schema:
+【出力JSONスキーマ】
 {{
   "facts": {{
     "error_type": "",
@@ -102,7 +103,7 @@ Output JSON schema:
   }}
 }}
 
-Log lines:
+【ログ行】
 {json.dumps(log_lines, ensure_ascii=False)}
 """
 
