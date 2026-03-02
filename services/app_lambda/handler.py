@@ -18,6 +18,9 @@ def handler(event, context):
     mode = (qs.get("mode") or "ok").lower()
 
     if mode == "timeout":
+        print("ERROR: about to timeout intentionally (demo)")
+        # CloudWatch に flush される猶予を作る
+        time.sleep(1)
         # Lambda timeout: 10s のため確実にタイムアウトさせる
         time.sleep(30)
 

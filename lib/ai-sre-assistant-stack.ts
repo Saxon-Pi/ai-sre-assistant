@@ -31,7 +31,8 @@ export class AiSreAssistantStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
     });
-    table.grantReadWriteData(appFn);
+    //table.grantReadWriteData(appFn);
+    table.grantReadData(appFn); // Read only で権限エラーを発生させる
 
     // App Lambda ロググループ (サブスクリプションフィルタと確実に連携するため明示)
     /*
@@ -41,7 +42,7 @@ export class AiSreAssistantStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
     */
-   
+
     // 既存ロググループを参照
     const appLogGroup = logs.LogGroup.fromLogGroupName(
       this,
@@ -84,7 +85,10 @@ export class AiSreAssistantStack extends cdk.Stack {
     new logs.SubscriptionFilter(this, "AppErrorSubscription", {
       logGroup: appLogGroup,
       destination,
-      filterPattern: logs.FilterPattern.anyTerm("ERROR", "Error", "Exception", "Traceback"),
+      filterPattern: logs.FilterPattern.anyTerm(
+        "ERROR", "Error", "Exception", "Traceback",
+        "Task timed out", "timed out"
+      ),
     });
 
     // Bedrock 呼び出し権限
