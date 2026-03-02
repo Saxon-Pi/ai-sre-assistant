@@ -4,6 +4,7 @@ import base64
 import gzip
 import urllib.request
 from typing import Any, Dict, List
+from urllib.parse import quote
 
 import boto3
 
@@ -56,6 +57,12 @@ def _extract_messages(payload: Dict[str, Any], max_lines: int = 30) -> List[str]
         if m:
             msgs.append(m)
     return msgs[-max_lines:]
+
+# ロググループ URL 作成
+def _cloudwatch_logs_url(region: str, log_group: str, log_stream: str) -> str:
+    lg = quote(log_group, safe="")
+    ls = quote(log_stream, safe="")
+    return f"https://{region}.console.aws.amazon.com/cloudwatch/home?region={region}#logsV2:log-groups/log-group/{lg}/log-events/{ls}"
 
 # Bedrock の LLM によるエラー分析
 # MVP: 推論を1回だけ行う (将来Step化しやすいフォーマットで作成)
@@ -187,6 +194,11 @@ def handler(event, context):
         msg.append("\n*Recommended actions*")
         for a in actions[:5]:
             msg.append(f"• [{a.get('priority','medium')}] {a.get('action','')}")
+    
+    # ロググループ URL
+    region = boto3.session.Session().region_name or "ap-northeast-1"
+    logs_url = _cloudwatch_logs_url(region, log_group, log_stream)
+    msg.append(f"Logs: <{logs_url}|Open in CloudWatch Logs>")
 
     _post_to_slack("\n".join(msg))
 
