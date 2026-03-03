@@ -65,22 +65,84 @@ def _cloudwatch_logs_url(region: str, log_group: str, log_stream: str) -> str:
     ls = quote(log_stream, safe="")
     return f"https://{region}.console.aws.amazon.com/cloudwatch/home?region={region}#logsV2:log-groups/log-group/{lg}/log-events/{ls}"
 
-# LLM の回答 JSON の前後に余計な文字列が存在しても JSON 部分だけを抽出 (JSONDecodeError対策)
-def _extract_json_object(text: str) -> str:
-    if not text:
-        raise ValueError("Empty model output")
+# # LLM の回答 JSON の前後に余計な文字列が存在しても JSON 部分だけを抽出 (JSONDecodeError対策)
+# def _extract_json_object(text: str) -> str:
+#     if not text:
+#         raise ValueError("Empty model output")
 
-    # JSON 部の { } のインデックスを取得 ({}がなければJSONなしと見なしエラー)
-    start = text.find("{")
-    end = text.rfind("}")
-    if start == -1 or end == -1 or end <= start:
-        raise ValueError(f"No JSON object found in output: {text[:200]}")
+#     # JSON 部の { } のインデックスを取得 ({}がなければJSONなしと見なしエラー)
+#     start = text.find("{")
+#     end = text.rfind("}")
+#     if start == -1 or end == -1 or end <= start:
+#         raise ValueError(f"No JSON object found in output: {text[:200]}")
 
-    candidate = text[start:end+1]
+#     candidate = text[start:end+1]
 
-    # 制御文字を除去
-    candidate = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", candidate)
-    return candidate
+#     # 制御文字を除去
+#     candidate = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", candidate)
+#     return candidate
+
+# LLM の回答をパースして JSON に変換 (モデルが JSON 出力を守らないケースがあるため)
+def _parse_tag_output(text: str) -> Dict[str, Any]:
+    # セクション抽出
+    def section(name: str) -> str:
+        m = re.search(rf"{name}:\s*(.*?)(?:\n[A-Z]+:|\Z)", text, flags=re.S)
+        return (m.group(1).strip() if m else "")
+
+    facts_s = section("FACTS")
+    hypos_s = section("HYPOTHESES")
+    actions_s = section("ACTIONS")
+    assess_s = section("ASSESSMENT")
+
+    facts = {}
+    for line in facts_s.splitlines():
+        line = line.strip()
+        if line.startswith("-"):
+            kv = line[1:].strip().split(":", 1)
+            if len(kv) == 2:
+                facts[kv[0].strip()] = kv[1].strip()
+
+    # hypotheses
+    hypotheses = []
+    # 1) title... をブロックで取る
+    for m in re.finditer(r"\d+\)\s*title:\s*(.*?)\n\s*reasoning:\s*(.*?)\n\s*confidence:\s*(\d+)", hypos_s, flags=re.S):
+        hypotheses.append({
+            "title": m.group(1).strip(),
+            "reasoning": m.group(2).strip(),
+            "confidence": int(m.group(3)),
+        })
+    # actions
+    recommended_actions = []
+    for line in actions_s.splitlines():
+        line = line.strip()
+        m = re.match(r"-\s*\[(high|medium|low)\]\s*(.+)", line)
+        if m:
+            recommended_actions.append({"priority": m.group(1), "action": m.group(2).strip()})
+    # assessment
+    severity = ""
+    summary = ""
+    for line in assess_s.splitlines():
+        line = line.strip()
+        if line.startswith("- severity:"):
+            severity = line.split(":", 1)[1].strip()
+        if line.startswith("- summary:"):
+            summary = line.split(":", 1)[1].strip()
+
+    return {
+        "facts": {
+            "error_type": facts.get("error_type", ""),
+            "timestamp": facts.get("timestamp", ""),
+            "affected_service": facts.get("affected_service", ""),
+            "http_status": facts.get("http_status", ""),
+            "key_log_lines": [facts.get("key_log_lines", "")] if facts.get("key_log_lines") else [],
+        },
+        "hypotheses": hypotheses[:3],
+        "recommended_actions": recommended_actions[:5],
+        "overall_assessment": {
+            "summary": summary,
+            "severity": severity or "P2",
+        }
+    }
 
 # Bedrock の LLM によるエラー分析
 # MVP: 推論を1回だけ行う (将来Step化しやすいフォーマットで作成)
@@ -88,45 +150,40 @@ def _extract_json_object(text: str) -> str:
 def _invoke_bedrock(log_lines: List[str]) -> Dict[str, Any]:
     prompt = f"""
 あなたはSREのインシデント一次切り分けアシスタントです。
-以下のCloudWatchログ行を分析し、指定されたJSONスキーマで出力してください。
+以下のCloudWatchログを分析し、必ず指定のタグ形式で出力してください。
 
-【重要: 出力言語】
-- summary / reasoning / action など、人が読む文章は必ず日本語で書いてください。
-- AWSサービス名、API名、例外クラス名、メトリクス名、ログの引用は英語のまま保持してください。
-- 技術識別子（例: DynamoDB, AccessDeniedException, ProvisionedThroughputExceededException, RequestId）は翻訳しないでください。
-- もし英語の説明文が混ざった場合、その回答は不正です（技術識別子・ログ引用は除く）。
-- Do NOT translate exception class names such as ConditionalCheckFailed, AccessDeniedException, ProvisionedThroughputExceededException.
-- Exception names must remain exactly as they appear in logs.
+【重要】
+- 出力する文章は絶対に日本語にしてください。（技術用語・例外名・AWS名・ログ引用は原文の英語のままとする）
+- JSONは絶対に出力しないでください。
+- 下のタグとフォーマットを厳密に守ってください。
 
-【重要: フォーマット制約】
-- Return ONLY valid JSON. No markdown. No extra text.
-- JSONの先頭は必ず "{" で開始し、末尾は "}" で終了してください。
+【出力フォーマット（厳守）】
+FACTS:
+- error_type: <string or empty>
+- timestamp: <string or empty>
+- affected_service: <string or empty>
+- http_status: <string or empty>
+- key_log_lines: <one-line summary of key lines>
 
-【重要: 内容制約】
-- facts にはログから直接観測できる事実のみを書いてください（推測は禁止）。
-- hypotheses は最大3つ。confidence は 0〜100 の整数。
-- summary は 2〜3 文で簡潔に。
+HYPOTHESES:
+1) title: <string>
+   reasoning: <string>
+   confidence: <0-100 integer>
+2) title: <string>
+   reasoning: <string>
+   confidence: <0-100 integer>
+3) title: <string>
+   reasoning: <string>
+   confidence: <0-100 integer>
 
-【出力JSONスキーマ】
-{{
-  "facts": {{
-    "error_type": "",
-    "timestamp": "",
-    "affected_service": "",
-    "http_status": "",
-    "key_log_lines": []
-  }},
-  "hypotheses": [
-    {{"title":"","reasoning":"","confidence":0}}
-  ],
-  "recommended_actions": [
-    {{"action":"","priority":"high|medium|low"}}
-  ],
-  "overall_assessment": {{
-    "summary":"",
-    "severity":"P0|P1|P2|P3"
-  }}
-}}
+ACTIONS:
+- [high|medium|low] <action>
+- [high|medium|low] <action>
+- [high|medium|low] <action>
+
+ASSESSMENT:
+- severity: <P0|P1|P2|P3>
+- summary: <2-3 sentences>
 
 【ログ行】
 {json.dumps(log_lines, ensure_ascii=False)}
@@ -153,9 +210,7 @@ def _invoke_bedrock(log_lines: List[str]) -> Dict[str, Any]:
 
     # 回答の取得 (Claude系は content[0].text に回答が入る)
     text = data.get("content", [{}])[0].get("text", "")
-
-    json_str = _extract_json_object(text)
-    return json.loads(json_str)
+    return _parse_tag_output(text)
 
 # Slack に分析結果を通知
 def _post_to_slack(text: str) -> None:
