@@ -5,6 +5,7 @@ import gzip
 import urllib.request
 from typing import Any, Dict, List
 from urllib.parse import quote
+import re
 
 import boto3
 
@@ -63,6 +64,23 @@ def _cloudwatch_logs_url(region: str, log_group: str, log_stream: str) -> str:
     lg = quote(log_group, safe="")
     ls = quote(log_stream, safe="")
     return f"https://{region}.console.aws.amazon.com/cloudwatch/home?region={region}#logsV2:log-groups/log-group/{lg}/log-events/{ls}"
+
+# LLM の回答 JSON の前後に余計な文字列が存在しても JSON 部分だけを抽出 (JSONDecodeError対策)
+def _extract_json_object(text: str) -> str:
+    if not text:
+        raise ValueError("Empty model output")
+
+    # JSON 部の { } のインデックスを取得 ({}がなければJSONなしと見なしエラー)
+    start = text.find("{")
+    end = text.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        raise ValueError(f"No JSON object found in output: {text[:200]}")
+
+    candidate = text[start:end+1]
+
+    # 制御文字を除去
+    candidate = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", candidate)
+    return candidate
 
 # Bedrock の LLM によるエラー分析
 # MVP: 推論を1回だけ行う (将来Step化しやすいフォーマットで作成)
@@ -135,7 +153,9 @@ def _invoke_bedrock(log_lines: List[str]) -> Dict[str, Any]:
 
     # 回答の取得 (Claude系は content[0].text に回答が入る)
     text = data.get("content", [{}])[0].get("text", "")
-    return json.loads(text)
+
+    json_str = _extract_json_object(text)
+    return json.loads(json_str)
 
 # Slack に分析結果を通知
 def _post_to_slack(text: str) -> None:
@@ -161,8 +181,25 @@ def handler(event, context):
     log_stream = payload.get("logStream", "")
     lines = _extract_messages(payload)
 
-    # Bedrock LLM による分析
-    analysis = _invoke_bedrock(lines)
+    try:
+        # Bedrock LLM による分析
+        analysis = _invoke_bedrock(lines)
+    # JSON パースに失敗したらエラー
+    except Exception as e:
+        print("[ERROR] Bedrock/JSON parse failed:", repr(e))
+        # トリガーとなったエラーのログ URL だけは通知する
+        region = boto3.session.Session().region_name or "ap-northeast-1"
+        logs_url = _cloudwatch_logs_url(region, log_group, log_stream)
+        _post_to_slack(
+            "\n".join([
+                "*AI SRE Assistant* [P2]",
+                "LLM出力のJSONパースに失敗しました（フォーマット崩れの可能性）。",
+                f"Error: `{e}`",
+                f"Logs: <{logs_url}|Open in CloudWatch Logs>",
+            ])
+        )
+        return {"ok": False}
+
     # LLM の推論結果
     summary = analysis.get("overall_assessment", {}).get("summary", "")     # 分析の概要
     severity = analysis.get("overall_assessment", {}).get("severity", "P2") # エラーの重要度
