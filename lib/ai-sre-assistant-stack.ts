@@ -7,6 +7,8 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as logs_destinations from "aws-cdk-lib/aws-logs-destinations";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
+import * as sfn from "aws-cdk-lib/aws-stepfunctions";
+import * as tasks from "aws-cdk-lib/aws-stepfunctions-tasks";
 import * as path from "path";
 
 const modelId = process.env.BEDROCK_MODEL_ID ?? "anthropic.claude-3-haiku-20240307-v1:0";
@@ -65,7 +67,7 @@ export class AiSreAssistantStack extends cdk.Stack {
     root.addMethod("GET", new apigw.LambdaIntegration(appFn));
 
     // =====================================================
-    // エラーログ解析システム
+    // LLM 実行 Lambda
     // =====================================================
 
     // Secret Manager (Slack Incoming Webhook URL用)
@@ -76,7 +78,7 @@ export class AiSreAssistantStack extends cdk.Stack {
       "slack/webhook/ai-sre-assistant"
     );
 
-    // Ingest Lambda (PoV/単一LLM)
+    // Ingest Lambda (サブスクリプションフィルタ受口→StepFunction実行)
     const ingestFn = new lambda.Function(this, "LogIngestLambda", {
       runtime: lambda.Runtime.PYTHON_3_12,
       handler: "handler.handler",
@@ -88,7 +90,6 @@ export class AiSreAssistantStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(30),
       memorySize: 512,
     });
-    slackWebhookSecret.grantRead(ingestFn);
 
     // StepFunctions で LLM 実行を 3段階に分けてエラー原因と対策を分析させる
     // Step1: Facts (エラーログから事実だけを抽出)
@@ -143,6 +144,35 @@ export class AiSreAssistantStack extends cdk.Stack {
         resources: ["*"],
       }));
     }
+
+    // =====================================================
+    // Step Functions
+    // =====================================================
+
+    const stepFacts = new tasks.LambdaInvoke(this, "ExtractFacts", {
+      lambdaFunction: factsFn,
+      outputPath: "$.Payload",
+    });
+
+    const stepHypos = new tasks.LambdaInvoke(this, "GenerateHypotheses", {
+      lambdaFunction: hypoFn,
+      outputPath: "$.Payload",
+    });
+
+    const stepFinalize = new tasks.LambdaInvoke(this, "FinalizeAndNotify", {
+      lambdaFunction: finalizeFn,
+      outputPath: "$.Payload",
+    });
+
+    const stateMachine = new sfn.StateMachine(this, "AiSreAssistantStateMachine", {
+      definitionBody: sfn.DefinitionBody.fromChainable(
+        stepFacts.next(stepHypos).next(stepFinalize)
+      ),
+      timeout: cdk.Duration.minutes(5),
+    });
+
+    ingestFn.addEnvironment("STATEMACHINE_ARN", stateMachine.stateMachineArn);
+    stateMachine.grantStartExecution(ingestFn);
 
     // Outputs
     new cdk.CfnOutput(this, "ApiUrl", { value: api.url });
