@@ -9,18 +9,24 @@ import * as logs_destinations from "aws-cdk-lib/aws-logs-destinations";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as path from "path";
 
+const modelId = process.env.BEDROCK_MODEL_ID ?? "anthropic.claude-3-haiku-20240307-v1:0";
+
 export class AiSreAssistantStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // DynamoDB (アプリ側・デモ用)
+    // =====================================================
+    // アプリケーション（意図的に不具合を発生させるデモ用アプリ）
+    // =====================================================
+
+    // DynamoDB
     const table = new dynamodb.Table(this, "DemoTable", {
       partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY, // デモ用なので削除OK
     });
 
-    // App Lambda (APIのバックエンド)
+    // App Lambda
     const appFn = new lambda.Function(this, "AppLambda", {
       runtime: lambda.Runtime.PYTHON_3_12,
       handler: "handler.handler",
@@ -58,6 +64,10 @@ export class AiSreAssistantStack extends cdk.Stack {
     const root = api.root.addResource("demo");
     root.addMethod("GET", new apigw.LambdaIntegration(appFn));
 
+    // =====================================================
+    // エラーログ解析システム
+    // =====================================================
+
     // Secret Manager (Slack Incoming Webhook URL用)
     // {"webhook_url":"https://hooks.slack.com/services/XXX/YYY/ZZZ"}
     const slackWebhookSecret = secretsmanager.Secret.fromSecretNameV2(
@@ -66,7 +76,7 @@ export class AiSreAssistantStack extends cdk.Stack {
       "slack/webhook/ai-sre-assistant"
     );
 
-    // Ingest Lambda (サブスクリプションフィルタ受口)
+    // Ingest Lambda (PoV/単一LLM)
     const ingestFn = new lambda.Function(this, "LogIngestLambda", {
       runtime: lambda.Runtime.PYTHON_3_12,
       handler: "handler.handler",
@@ -80,6 +90,41 @@ export class AiSreAssistantStack extends cdk.Stack {
     });
     slackWebhookSecret.grantRead(ingestFn);
 
+    // StepFunctions で LLM 実行を 3段階に分けてエラー原因と対策を分析させる
+    // Step1: Facts (エラーログから事実だけを抽出)
+    const factsFn = new lambda.Function(this, "FactsLambda", {
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: "handler.handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../services/step_facts_lambda")),
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      environment: { BEDROCK_MODEL_ID: modelId },
+    });
+
+    // Step2: Hypotheses (前ステップの情報から仮説生成)
+    const hypoFn = new lambda.Function(this, "HypothesesLambda", {
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: "handler.handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../services/step_hypotheses_lambda")),
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      environment: { BEDROCK_MODEL_ID: modelId },
+    });
+
+    // Step3: Finalize + Slack notify (分析サマリと推奨アクションをSlack通知)
+    const finalizeFn = new lambda.Function(this, "FinalizeLambda", {
+      runtime: lambda.Runtime.PYTHON_3_12,
+      handler: "handler.handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../services/step_finalize_lambda")),
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
+      environment: {
+        BEDROCK_MODEL_ID: modelId,
+        SLACK_WEBHOOK_SECRET_NAME: "slack/webhook/ai-sre-assistant",
+      },
+    });
+    slackWebhookSecret.grantRead(finalizeFn);
+
     // サブスクリプションフィルタ: エラー行だけを流す
     const destination = new logs_destinations.LambdaDestination(ingestFn);
     new logs.SubscriptionFilter(this, "AppErrorSubscription", {
@@ -91,13 +136,13 @@ export class AiSreAssistantStack extends cdk.Stack {
       ),
     });
 
-    // Bedrock 呼び出し権限
-    ingestFn.addToRolePolicy(
-      new iam.PolicyStatement({
+    // Bedrock invoke 権限
+    for (const fn of [ingestFn, factsFn, hypoFn, finalizeFn]) {
+      fn.addToRolePolicy(new iam.PolicyStatement({
         actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
-        resources: ["*"], // あとでモデルARN に絞る
-      })
-    );
+        resources: ["*"],
+      }));
+    }
 
     // Outputs
     new cdk.CfnOutput(this, "ApiUrl", { value: api.url });
