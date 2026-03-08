@@ -21,7 +21,7 @@ import json
 from typing import Any, Dict, List
 from common import invoke_claude  # モデル実行は共通化
 
-#
+# Lambda の関数名を取得
 def extract_function_name_from_log_group(log_group: str) -> str:
     prefix = "/aws/lambda/"
     if log_group.startswith(prefix):
