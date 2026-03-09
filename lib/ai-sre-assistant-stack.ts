@@ -148,20 +148,36 @@ export class AiSreAssistantStack extends cdk.Stack {
     // =====================================================
     // Step Functions
     // =====================================================
+    
+    /*
+    resultPath を使用して各ステップの実行履歴を管理する
+    {
+      "log": {...},
+      "facts": {...},
+      "hypotheses": [...],
+      "analysis": {...}
+    }
+    */
 
     const stepFacts = new tasks.LambdaInvoke(this, "ExtractFacts", {
       lambdaFunction: factsFn,
-      outputPath: "$.Payload",
+      inputPath: "$",
+      resultPath: "$.facts",
+      outputPath: "$",
     });
 
     const stepHypos = new tasks.LambdaInvoke(this, "GenerateHypotheses", {
       lambdaFunction: hypoFn,
-      outputPath: "$.Payload",
+      inputPath: "$",
+      resultPath: "$.hypotheses",
+      outputPath: "$",
     });
 
     const stepFinalize = new tasks.LambdaInvoke(this, "FinalizeAndNotify", {
       lambdaFunction: finalizeFn,
-      outputPath: "$.Payload",
+      inputPath: "$",
+      resultPath: "$.analysis",
+      outputPath: "$",
     });
 
     const stateMachine = new sfn.StateMachine(this, "AiSreAssistantStateMachine", {

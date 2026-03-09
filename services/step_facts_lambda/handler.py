@@ -128,5 +128,4 @@ function_name_from_log_group: {function_name}
     if not facts["function_name"]:
         facts["function_name"] = function_name
 
-    event["facts"] = facts
-    return event
+    return facts

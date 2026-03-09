@@ -97,5 +97,4 @@ facts:
     llm_output = invoke_claude(prompt, max_tokens=700)
     hypotheses = parse_hypotheses(llm_output)
 
-    event["hypotheses"] = hypotheses
-    return event
+    return hypotheses

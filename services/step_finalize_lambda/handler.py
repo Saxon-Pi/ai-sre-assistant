@@ -61,3 +61,10 @@ def handler(event, context):
     hypotheses = event.get("hypotheses", [])
 
     prompt = f"""
+    """
+
+    return {
+        "severity": severity,
+        "summary": summary,
+        "recommended_actions": actions,
+    }

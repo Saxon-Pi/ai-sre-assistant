@@ -41,10 +41,12 @@ def handler(event, context):
 
     # ステートマシンの入力
     input_obj = {
-        "source": "cloudwatch-logs",
-        "log_group": log_group,
-        "log_stream": log_stream,
-        "log_lines": lines,
+        "log": {
+            "source": "cloudwatch-logs",
+            "log_group": log_group,
+            "log_stream": log_stream,
+            "lines": lines,
+        }
     }
 
     sfn.start_execution(
