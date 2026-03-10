@@ -74,55 +74,96 @@ def build_slack_message(
     affected_service = facts.get("affected_service", "")
     key_log_lines = facts.get("key_log_lines", [])
 
+    # 影響度に応じて絵文字表示
+    severity_emoji_map = {
+        "P0": "🚨",
+        "P1": "⚠️",
+        "P2": "🟡",
+        "P3": "ℹ️",
+    }
+    severity_emoji = severity_emoji_map.get(severity, "🟡")
+
+    # アクションの優先度順に並べ替え
+    priority_order = {"high": 0, "medium": 1, "low": 2}
+    sorted_actions = sorted(
+        actions,
+        key=lambda x: priority_order.get(x.get("priority", "medium"), 1)
+    )
+
     lines: List[str] = []
 
-    # header
-    lines.append(f"*AI SRE Assistant* [{severity}]")
-    lines.append(f"LogGroup: `{log_group}`")
-    lines.append(f"LogStream: `{log_stream}`")
+    # Header
+    lines.append(f"{severity_emoji} *AI SRE Assistant* [{severity}]")
     if function_name:
-        lines.append(f"Function: `{function_name}`")
-    lines.append(f"Logs: <{logs_url}|Open in CloudWatch Logs>")
+        lines.append(f"*Function*: `{function_name}`")
+    lines.append(f"*LogGroup*: `{log_group}`")
+    lines.append(f"*LogStream*: `{log_stream}`")
+    lines.append(f"*Logs*: <{logs_url}|Open in CloudWatch Logs>")
     
-    # summary
+    # Summary
     lines.append("")
     lines.append("*Summary*")
-    lines.append(summary or "(summary not available)")
+    lines.append(summary or "要約を生成できませんでした。")
 
-    # facts
+    # Facts
     lines.append("")
     lines.append("*Facts*")
-    lines.append(f"• observed_error_type: {observed_error_type}")
-    lines.append(f"• inferred_error_type: {inferred_error_type}")
-    lines.append(f"• error_type_confidence: {error_type_confidence}")
-    lines.append(f"• affected_service: {affected_service}")
+    if observed_error_type:
+        lines.append(f"• observed_error_type: `{observed_error_type}`")
+    else:
+        lines.append("• observed_error_type: (not detected)")
 
-    # key log lines (LLMが根拠にしたログ)
+    if inferred_error_type:
+        lines.append(
+            f"• inferred_error_type: `{inferred_error_type}` "
+            f"(confidence: {error_type_confidence})"
+        )
+    else:
+        lines.append("• inferred_error_type: (not inferred)")
+
+    if affected_service:
+        lines.append(f"• affected_service: `{affected_service}`")
+
+    if key_log_lines:
+        lines.append("• key_log_lines:")
+        for log_line in key_log_lines[:3]:
+            lines.append(f"  - `{log_line}`")
+
+    # Log (LLMが根拠にしたログ)
     if key_log_lines:
         lines.append("• key_log_lines:")
         for log_line in key_log_lines[:3]:
             lines.append(f"  - {log_line}")
 
-    # hypotheses
+    # Hypotheses
     if hypotheses:
         lines.append("")
         lines.append("*Hypotheses*")
-        for h in hypotheses[:3]:
+        for idx, h in enumerate(hypotheses[:3], start=1):
             title = h.get("title", "")
             reasoning = h.get("reasoning", "")
             confidence = h.get("confidence", 0)
-            lines.append(f"• {title} ({confidence})")
-            if reasoning:
-                lines.append(f"  - {reasoning}")
 
-    # recommended actions
-    if actions:
+            lines.append(f"{idx}. *{title}* ({confidence})")
+            if reasoning:
+                lines.append(f"   - {reasoning}")
+
+    # Recommended actions
+    if sorted_actions:
         lines.append("")
         lines.append("*Recommended actions*")
-        for a in actions[:5]:
+        for a in sorted_actions[:5]:
             priority = a.get("priority", "medium")
             action = a.get("action", "")
-            lines.append(f"• [{priority}] {action}")
+
+            if priority == "high":
+                prefix = "🔴"
+            elif priority == "medium":
+                prefix = "🟠"
+            else:
+                prefix = "🔵"
+
+            lines.append(f"{prefix} [{priority}] {action}")
 
     # 統合
     return "\n".join(lines)
