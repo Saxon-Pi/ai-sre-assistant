@@ -15,13 +15,13 @@ sfn = boto3.client("stepfunctions")
 STATEMACHINE_ARN = os.environ.get("STATEMACHINE_ARN", "")
 
 # event のデコード (サブスクリプションフィルタは Base64エンコード、gzip圧縮)
-def _decode_cwl_payload(event: Dict[str, Any]) -> Dict[str, Any]:
+def decode_cwl_payload(event: Dict[str, Any]) -> Dict[str, Any]:
     data = base64.b64decode(event["awslogs"]["data"])
     unzipped = gzip.decompress(data)
     return json.loads(unzipped)
 
 # ログ内容の取得 (デフォルトは末尾最大30行まで)
-def _extract_messages(payload: Dict[str, Any], max_lines: int = 30) -> List[str]:
+def extract_messages(payload: Dict[str, Any], max_lines: int = 30) -> List[str]:
     msgs = []
     for le in payload.get("logEvents", []):
         m = le.get("message", "").strip()
@@ -31,10 +31,10 @@ def _extract_messages(payload: Dict[str, Any], max_lines: int = 30) -> List[str]
 
 def handler(event, context):
     # エラーログの取得
-    payload = _decode_cwl_payload(event)
+    payload = decode_cwl_payload(event)
     log_group = payload.get("logGroup", "")
     log_stream = payload.get("logStream", "")
-    lines = _extract_messages(payload)
+    lines = extract_messages(payload)
 
     if not STATEMACHINE_ARN:
         raise RuntimeError("STATEMACHINE_ARN is empty")
