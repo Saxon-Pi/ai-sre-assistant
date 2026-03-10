@@ -54,6 +54,79 @@ def post_to_slack(text: str) -> None:
     with urllib.request.urlopen(req, timeout=10) as res:
         res.read()
 
+# Step Functions の state（facts/hypotheses/analysis）を統合し Slack 通知用テキストに整形
+def build_slack_message(
+    log_group: str,
+    log_stream: str,
+    logs_url: str,
+    facts: Dict[str, Any],
+    hypotheses: List[Dict[str, Any]],
+    analysis: Dict[str, Any],
+) -> str:
+    severity = analysis.get("severity", "P2") # severity がなければ "P2" とする
+    summary = analysis.get("summary", "")
+    actions = analysis.get("recommended_actions", [])
+
+    observed_error_type = facts.get("observed_error_type", "")
+    inferred_error_type = facts.get("inferred_error_type", "")
+    error_type_confidence = facts.get("error_type_confidence", 0)
+    function_name = facts.get("function_name", "")
+    affected_service = facts.get("affected_service", "")
+    key_log_lines = facts.get("key_log_lines", [])
+
+    lines: List[str] = []
+
+    # header
+    lines.append(f"*AI SRE Assistant* [{severity}]")
+    lines.append(f"LogGroup: `{log_group}`")
+    lines.append(f"LogStream: `{log_stream}`")
+    if function_name:
+        lines.append(f"Function: `{function_name}`")
+    lines.append(f"Logs: <{logs_url}|Open in CloudWatch Logs>")
+    
+    # summary
+    lines.append("")
+    lines.append("*Summary*")
+    lines.append(summary or "(summary not available)")
+
+    # facts
+    lines.append("")
+    lines.append("*Facts*")
+    lines.append(f"• observed_error_type: {observed_error_type}")
+    lines.append(f"• inferred_error_type: {inferred_error_type}")
+    lines.append(f"• error_type_confidence: {error_type_confidence}")
+    lines.append(f"• affected_service: {affected_service}")
+
+    # key log lines (LLMが根拠にしたログ)
+    if key_log_lines:
+        lines.append("• key_log_lines:")
+        for log_line in key_log_lines[:3]:
+            lines.append(f"  - {log_line}")
+
+    # hypotheses
+    if hypotheses:
+        lines.append("")
+        lines.append("*Hypotheses*")
+        for h in hypotheses[:3]:
+            title = h.get("title", "")
+            reasoning = h.get("reasoning", "")
+            confidence = h.get("confidence", 0)
+            lines.append(f"• {title} ({confidence})")
+            if reasoning:
+                lines.append(f"  - {reasoning}")
+
+    # recommended actions
+    if actions:
+        lines.append("")
+        lines.append("*Recommended actions*")
+        for a in actions[:5]:
+            priority = a.get("priority", "medium")
+            action = a.get("action", "")
+            lines.append(f"• [{priority}] {action}")
+
+    # 統合
+    return "\n".join(lines)
+
 # ロググループ URL 作成
 def cloudwatch_logs_url(region: str, log_group: str, log_stream: str) -> str:
     lg = quote(log_group, safe="")
