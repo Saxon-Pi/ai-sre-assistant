@@ -13,7 +13,7 @@ recommended_actions: エラー解決のための推奨アクション
 import os, json, urllib.request, boto3
 from typing import Any, Dict, List
 from urllib.parse import quote
-from common import invoke_claude  # モデル実行は共通化
+from common.invoke_claude import invoke_claude  # モデル実行は共通化
 
 secrets = boto3.client("secretsmanager")
 SLACK_WEBHOOK_SECRET_NAME = os.environ.get("SLACK_WEBHOOK_SECRET_NAME", "")

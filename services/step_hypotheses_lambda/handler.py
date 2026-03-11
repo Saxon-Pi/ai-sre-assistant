@@ -4,7 +4,7 @@ Step_facts の出力情報を元にエラー原因の仮説を立てる Lambda �
 
 import json
 from typing import Any, Dict, List
-from common import invoke_claude  # モデル実行は共通化
+from common.invoke_claude import invoke_claude  # モデル実行は共通化
 
 # LLM のテキスト出力を、安全に Python の構造化データ (dict) に変換する簡易パーサ
 # JSON 生成を LLM に任せると JSON 前後に文字が入り、json.loads() に失敗するケースがあるため
