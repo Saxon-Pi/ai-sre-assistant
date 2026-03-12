@@ -171,6 +171,7 @@ export class AiSreAssistantStack extends cdk.Stack {
 
     const stepFacts = new tasks.LambdaInvoke(this, "ExtractFacts", {
       lambdaFunction: factsFn,
+      payloadResponseOnly: true, // Lambdaの return 値だけを Step Functions に返す
       inputPath: "$",
       resultPath: "$.facts",
       outputPath: "$",
@@ -178,6 +179,7 @@ export class AiSreAssistantStack extends cdk.Stack {
 
     const stepHypos = new tasks.LambdaInvoke(this, "GenerateHypotheses", {
       lambdaFunction: hypoFn,
+      payloadResponseOnly: true,
       inputPath: "$",
       resultPath: "$.hypotheses",
       outputPath: "$",
@@ -185,6 +187,7 @@ export class AiSreAssistantStack extends cdk.Stack {
 
     const stepFinalize = new tasks.LambdaInvoke(this, "FinalizeAndNotify", {
       lambdaFunction: finalizeFn,
+      payloadResponseOnly: true,
       inputPath: "$",
       resultPath: "$.analysis",
       outputPath: "$",

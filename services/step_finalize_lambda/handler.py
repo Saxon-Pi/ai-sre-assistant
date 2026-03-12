@@ -17,6 +17,8 @@ from common.invoke_claude import invoke_claude  # モデル実行は共通化
 
 secrets = boto3.client("secretsmanager")
 SLACK_WEBHOOK_SECRET_NAME = os.environ.get("SLACK_WEBHOOK_SECRET_NAME", "")
+# 毎回 Secrets Manager を呼ばないようにするためのメモリキャッシュ
+_cached_webhook_url = None
 
 # Secrets Manager から Slack Webhook URL 取得
 # {"webhook_url":"https://hooks.slack.com/services/XXX/YYY/ZZZ"}
