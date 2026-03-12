@@ -80,7 +80,7 @@ export class AiSreAssistantStack extends cdk.Stack {
 
     // Bedrock 呼び出し共通部の Lambda Layer
     const commonLayer = new lambda.LayerVersion(this, "CommonLayer", {
-      code: lambda.Code.fromAsset(path.join(__dirname, "../layers/common")),
+      code: lambda.Code.fromAsset(path.join(__dirname, "../layers/shared")),
       compatibleRuntimes: [lambda.Runtime.PYTHON_3_12],
       description: "Common utilities for AI SRE Assistant",
     });
