@@ -78,9 +78,10 @@ def parse_facts(text: str) -> Dict[str, Any]:
 
     return facts
 
-def handler(event, context):
-    log_lines: List[str] = event.get("log_lines", [])
-    log_group: str = event.get("log_group", "")
+def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    log = event.get("log", {})
+    log_lines: List[str] = log.get("lines", [])
+    log_group: str = log.get("log_group", "")
 
     function_name = extract_function_name_from_log_group(log_group)
 
