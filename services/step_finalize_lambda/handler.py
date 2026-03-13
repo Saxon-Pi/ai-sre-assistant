@@ -202,8 +202,11 @@ def parse_analysis(text: str) -> dict:
             priority = "medium"
             action = item
             if item.startswith("[") and "]" in item:
-                priority = item[1:item.find("]")].strip()
-                action = item[item.find("]") + 1:].strip()
+                closing = item.find("]")
+                priority = item[1:closing].strip().lower()
+                action = item[closing + 1:].strip()
+            if priority not in {"high", "medium", "low"}:
+                priority = "medium"
             analysis["recommended_actions"].append({
                 "priority": priority,
                 "action": action,
