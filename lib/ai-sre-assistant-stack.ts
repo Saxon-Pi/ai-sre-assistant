@@ -78,6 +78,13 @@ export class AiSreAssistantStack extends cdk.Stack {
       "slack/webhook/ai-sre-assistant"
     );
 
+    // Bedrock 呼び出し共通部の Lambda Layer
+    const commonLayer = new lambda.LayerVersion(this, "CommonLayer", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../layers/shared")),
+      compatibleRuntimes: [lambda.Runtime.PYTHON_3_12],
+      description: "Common utilities for AI SRE Assistant",
+    });
+
     // Ingest Lambda (サブスクリプションフィルタ受口→StepFunction実行)
     const ingestFn = new lambda.Function(this, "LogIngestLambda", {
       runtime: lambda.Runtime.PYTHON_3_12,
@@ -100,6 +107,7 @@ export class AiSreAssistantStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(30),
       memorySize: 512,
       environment: { BEDROCK_MODEL_ID: modelId },
+      layers: [commonLayer],
     });
 
     // Step2: Hypotheses (前ステップの情報から仮説生成)
@@ -110,6 +118,7 @@ export class AiSreAssistantStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(30),
       memorySize: 512,
       environment: { BEDROCK_MODEL_ID: modelId },
+      layers: [commonLayer],
     });
 
     // Step3: Finalize + Slack notify (分析サマリと推奨アクションをSlack通知)
@@ -123,6 +132,7 @@ export class AiSreAssistantStack extends cdk.Stack {
         BEDROCK_MODEL_ID: modelId,
         SLACK_WEBHOOK_SECRET_NAME: "slack/webhook/ai-sre-assistant",
       },
+      layers: [commonLayer],
     });
     slackWebhookSecret.grantRead(finalizeFn);
 
@@ -161,6 +171,7 @@ export class AiSreAssistantStack extends cdk.Stack {
 
     const stepFacts = new tasks.LambdaInvoke(this, "ExtractFacts", {
       lambdaFunction: factsFn,
+      payloadResponseOnly: true, // Lambdaの return 値だけを Step Functions に返す
       inputPath: "$",
       resultPath: "$.facts",
       outputPath: "$",
@@ -168,6 +179,7 @@ export class AiSreAssistantStack extends cdk.Stack {
 
     const stepHypos = new tasks.LambdaInvoke(this, "GenerateHypotheses", {
       lambdaFunction: hypoFn,
+      payloadResponseOnly: true,
       inputPath: "$",
       resultPath: "$.hypotheses",
       outputPath: "$",
@@ -175,6 +187,7 @@ export class AiSreAssistantStack extends cdk.Stack {
 
     const stepFinalize = new tasks.LambdaInvoke(this, "FinalizeAndNotify", {
       lambdaFunction: finalizeFn,
+      payloadResponseOnly: true,
       inputPath: "$",
       resultPath: "$.analysis",
       outputPath: "$",
