@@ -8,6 +8,11 @@ from botocore.exceptions import ClientError
 LLM によるエラー分析デモ用にエラーを簡単に発生させるための API
 API Gateway から GET /demo?mode=timeout|iam|conditional|ok を叩くことで、
 App Lambda 内で タイムアウト/例外/権限エラー/正常応答 を引き起こすことができる
+
+【API実行】
+https://xxx.execute-api.ap-northeast-1.amazonaws.com/dev/demo?mode=timeout
+https://xxx.execute-api.ap-northeast-1.amazonaws.com/dev/demo?mode=conditional
+https://xxx.execute-api.ap-northeast-1.amazonaws.com/dev/demo?mode=iam
 """
 
 dynamodb = boto3.resource("dynamodb")

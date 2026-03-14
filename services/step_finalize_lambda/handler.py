@@ -117,19 +117,19 @@ def build_slack_message(
     # Header
     lines.append(f"{severity_emoji} *AI SRE Assistant* [{severity}]")
     if function_name:
-        lines.append(f"*Function*: `{function_name}`")
-    lines.append(f"*LogGroup*: `{log_group}`")
-    lines.append(f"*LogStream*: `{log_stream}`")
-    lines.append(f"*Logs*: <{logs_url}|Open in CloudWatch Logs>")
+        lines.append(f"*関数名*: `{function_name}`")
+    lines.append(f"*ロググループ*: `{log_group}`")
+    lines.append(f"*ログストリーム*: `{log_stream}`")
+    lines.append(f"*ログURL*: <{logs_url}|Open in CloudWatch Logs>")
     
-    # Summary
+    # 概要
     lines.append("")
-    lines.append("*Summary*")
+    lines.append("*概要*")
     lines.append(summary or "要約を生成できませんでした。")
 
-    # Facts
+    # 観測事象
     lines.append("")
-    lines.append("*Facts*")
+    lines.append("*観測事象*")
     if observed_error_type:
         lines.append(f"• observed_error_type: `{observed_error_type}`")
     else:
@@ -157,10 +157,10 @@ def build_slack_message(
         for log_line in key_log_lines[:3]:
             lines.append(f"  - {log_line}")
 
-    # Hypotheses
+    # 原因仮説
     if hypotheses:
         lines.append("")
-        lines.append("*Hypotheses*")
+        lines.append("*原因仮説*")
         for idx, h in enumerate(hypotheses[:3], start=1):
             title = h.get("title", "")
             reasoning = h.get("reasoning", "")
@@ -170,10 +170,10 @@ def build_slack_message(
             if reasoning:
                 lines.append(f"   - {reasoning}")
 
-    # Recommended actions
+    # 推奨アクション
     if sorted_actions:
         lines.append("")
-        lines.append("*Recommended actions*")
+        lines.append("*推奨アクション*")
         for a in sorted_actions[:5]:
             priority = a.get("priority", "medium")
             action = a.get("action", "")
