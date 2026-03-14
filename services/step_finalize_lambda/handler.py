@@ -8,6 +8,26 @@ severity: エラーの影響度
 summary: エラー原因のサマリ
 recommended_actions: エラー解決のための推奨アクション
   (優先度:high/medium/low)
+
+【出力イメージ】
+"analysis": {
+    "severity": "P2",
+    "summary": "DynamoDB 条件付きチェックの失敗により、一部の機能に影響がある可能性があります。原因は、アプリケーションの DynamoDB 操作が期待された条件を満たしていないことが考えられます。",
+    "recommended_actions": [
+      {
+        "priority": "high",
+        "action": "DynamoDB テーブルのスキーマと、アプリケーションが実行している DynamoDB 操作を確認する。"
+      },
+      {
+        "priority": "medium",
+        "action": "DynamoDB コンソールで、該当するテーブルの最近の書き込み/読み取り操作をチェックし、エラーの発生パターンを特定する。"
+      },
+      {
+        "priority": "low",
+        "action": "DynamoDB サービスの健全性を確認し、一時的な問題の可能性を排除する。"
+      }
+    ]
+  }
 """
 
 import os, json, urllib.request, boto3

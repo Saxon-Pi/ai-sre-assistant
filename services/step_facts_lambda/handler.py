@@ -15,6 +15,23 @@
 【推論項目】
 "inferred_error_type": "",  # ログ内容からLLMが推定したエラー種別
 "error_type_confidence": 0, # inferred_error_type の推定信頼度
+
+【出力イメージ】
+"facts": {
+    "observed_error_type": "ConditionalCheckFailed",
+    "inferred_error_type": "DynamoDB conditional check failure",
+    "error_type_confidence": 90,
+    "timestamp": "",
+    "affected_service": "DynamoDB",
+    "http_status": "",
+    "request_id": "",
+    "function_name": "AiSreAssistantStack-AppLambda46D23914-nKXsWjUMarqM",
+    "key_log_lines": [
+      "\"[ERROR] Exception: ConditionalCheckFailed: demo exception for testing\"",
+      "\"Traceback (most recent call last):\"",
+      "\"  File \\\"/var/task/handler.py\\\", line 29, in handler\\n    raise Exception(\\\"ConditionalCheckFailed: demo exception for testing\\\")\""
+    ]
+  }
 """
 
 import json
