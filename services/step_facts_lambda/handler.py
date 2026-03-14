@@ -15,6 +15,23 @@
 【推論項目】
 "inferred_error_type": "",  # ログ内容からLLMが推定したエラー種別
 "error_type_confidence": 0, # inferred_error_type の推定信頼度
+
+【出力イメージ】
+"facts": {
+    "observed_error_type": "ConditionalCheckFailed",
+    "inferred_error_type": "DynamoDB conditional check failure",
+    "error_type_confidence": 90,
+    "timestamp": "",
+    "affected_service": "DynamoDB",
+    "http_status": "",
+    "request_id": "",
+    "function_name": "AiSreAssistantStack-AppLambda46D23914-nKXsWjUMarqM",
+    "key_log_lines": [
+      "\"[ERROR] Exception: ConditionalCheckFailed: demo exception for testing\"",
+      "\"Traceback (most recent call last):\"",
+      "\"  File \\\"/var/task/handler.py\\\", line 29, in handler\\n    raise Exception(\\\"ConditionalCheckFailed: demo exception for testing\\\")\""
+    ]
+  }
 """
 
 import json
@@ -86,21 +103,31 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     function_name = extract_function_name_from_log_group(log_group)
 
     prompt = f"""
-あなたは優秀な Site Reliability Engineer です。
-以下のCloudWatchログから、観測できる事実と、必要最小限の推定情報を抽出してください。
+[ROLE]
+あなたは経験豊富な Site Reliability Engineer です。
+AWS、CloudWatch Logs、分散システム障害の初動分析に精通しています。
 
-重要ルール:
+[OBJECTIVE]
+以下のCloudWatch Logsをもとに、観測できる事実と、必要最小限の推定情報を抽出してください。
+このステップでは、後続の仮説生成に使うための構造化 facts を作成することが目的です。
+
+[REASONING RULES]
 - observed_error_type には、ログに明示されている例外名・エラー種別のみを書いてください。
 - ログに明示されていない場合は、observed_error_type は空にしてください。
 - inferred_error_type には、ログ内容から推定できるエラー種別を書いてください。
 - inferred_error_type が推定できない場合は空にしてください。
-- error_type_confidence は inferred_error_type に対する確信度を 0〜100 の整数で出してください。
-- 事実と推定を混同しないでください。
-- 説明文や補足文は不要です。
-- 文章は日本語とし、AWSサービス名、例外名、HTTPステータス、RequestId などの技術用語は英語のまま扱ってください。
-- key_log_lines には根拠になる重要なログ行を 1〜3 行入れてください。
+- observed_error_type と inferred_error_type を混同しないでください。
+- facts に含める情報は、ログまたは参考情報から妥当と判断できる範囲に限定してください。
+- key_log_lines には、後続の仮説生成に役立つ重要なログ行を 1〜3 行含めてください。
+- function_name には、ログに明示されていない場合でも、参考情報の function_name_from_log_group を優先的に使ってください。
 
-出力は次の形式を厳守してください。
+[CONFIDENCE RULES]
+- error_type_confidence は inferred_error_type に対する確信度を 0〜100 の整数で出してください。
+- 根拠が弱い場合は高すぎる confidence を付けないでください。
+
+[OUTPUT SCHEMA]
+説明文や補足文は不要です。
+必ず次の形式だけで出力してください。
 
 observed_error_type: <string or empty>
 inferred_error_type: <string or empty>
@@ -115,10 +142,24 @@ key_log_lines:
 - <log line 2>
 - <log line 3>
 
-参考情報:
+[EXAMPLE]
+observed_error_type: ConditionalCheckFailed
+inferred_error_type: DynamoDB conditional check failure
+error_type_confidence: 90
+timestamp:
+affected_service: DynamoDB
+http_status:
+request_id:
+function_name: sample-lambda-function
+key_log_lines:
+- [ERROR] Exception: ConditionalCheckFailed: demo exception for testing
+- Traceback (most recent call last):
+- File "/var/task/handler.py", line 29, in handler
+
+[INPUT DATA]
 function_name_from_log_group: {function_name}
 
-ログ行:
+log_lines:
 {json.dumps(log_lines, ensure_ascii=False)}
 """
 
