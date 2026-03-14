@@ -80,7 +80,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     prompt = f"""
 [ROLE]
 あなたは経験豊富な Site Reliability Engineer です。
-AWS、CloudWatch Logs、分散システム障害の初動分析に精通しています。
+AWS、CloudWatch Logs、分散システム障害の原因分析に精通しています。
 
 [OBJECTIVE]
 与えられた facts をもとに、エラー原因の仮説を最大3つ生成してください。

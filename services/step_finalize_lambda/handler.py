@@ -250,26 +250,56 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     try:
         prompt = f"""
-あなたは優秀な Site Reliability Engineer です。
-以下の log, facts, hypotheses をもとに、インシデントの重要度・要約・推奨アクションを決定してください。
+[ROLE]
+あなたは経験豊富な Site Reliability Engineer です。
+AWS 上の障害対応、インシデント優先度判定、初動対応、運用改善に精通しています。
 
-重要ルール:
-- summary は日本語で 2〜3 文で簡潔に書いてください。
-- AWSサービス名、例外名、HTTPステータス、RequestId などの技術用語は英語のまま扱ってください。
+[OBJECTIVE]
+以下の log, facts, hypotheses をもとに、インシデントの重要度、要約、推奨アクションを決定してください。
+このステップでは、運用担当者が Slack 通知を見てすぐに状況を理解し、次の行動を取れるようにすることが目的です。
+
+[REASONING RULES]
 - observed_error_type が存在する場合は、それを最優先の根拠として扱ってください。
 - observed_error_type が空で、inferred_error_type が存在する場合は、それを補助的な根拠として扱ってください。
 - error_type_confidence が低い場合は断定を避けてください。
-- recommended_actions は具体的な確認・対処手順にしてください。
-- 危険な破壊的操作（削除・停止など）を断定的に指示しないでください。
-- 説明文や補足文は不要です。
+- hypotheses は原因候補であり、確定診断ではないことを前提に扱ってください。
+- summary には、何が起きているか / 何が原因として有力か / どの程度の影響か、を簡潔に含めてください。
+- recommended_actions は、初動対応や追加調査として実行しやすい具体的な手順にしてください。
+- 破壊的操作（削除、停止、ロールバック実行など）を断定的に指示してはいけません。
+- 一般論だけでなく、与えられた facts と hypotheses に結びついた判断をしてください。
+- severity はもっとも妥当なものを1つだけ選択してください。
 
-severity の定義:
+[SEVERITY RULES]
 - P0: 全面停止や極めて重大な障害
 - P1: 主要機能に大きな影響がある重大障害
 - P2: 部分的な障害、または単発・限定的な障害
-- P3: 軽微な問題、影響が小さな問題
+- P3: 軽微な問題、影響が小さい問題
 
-出力は次の形式を厳守してください。
+[LANGUAGE RULES]
+- summary は必ず日本語で 2〜3 文で書いてください。
+- recommended_actions の action は必ず日本語で書いてください。
+- 英語の文章を書いてはいけません。
+- ただし AWSサービス名、例外名、HTTPステータス、RequestId、CloudWatch Logs に含まれる原文は英語のまま使用してください。
+- 例外名やサービス名を不自然に和訳しないでください。
+- 内部的な推論は英語で行っても構いませんが、最終出力は必ず指定形式に従ってください。
+
+[ACTION RULES]
+- recommended_actions は最大3つまで出してください。
+- action は運用担当者がすぐ実行できる内容にしてください。
+- priority は high / medium / low のいずれかにしてください。
+- 高優先度の action から順に並べてください。
+
+[OUTPUT SCHEMA]
+説明文や補足文は不要です。
+必ず次の形式だけで出力してください。
+
+[EXAMPLE]
+severity: P2
+summary: DynamoDB の条件付きチェック失敗により、一部機能で更新処理が正常に完了していない可能性があります。アプリケーションの ConditionExpression と更新前提条件の不一致が有力な原因です。
+recommended_actions:
+- [high] DynamoDB の ConditionExpression とアプリケーション側の更新条件を確認する。
+- [medium] CloudWatch Logs で同種エラーの発生件数と発生タイミングを確認する。
+- [low] DynamoDB 側の一時的なサービス異常がないか AWS Health とメトリクスを確認する。
 
 severity: <P0|P1|P2|P3>
 summary: <string>
@@ -278,6 +308,7 @@ recommended_actions:
 - [high|medium|low] <action>
 - [high|medium|low] <action>
 
+[INPUT DATA]
 log:
 {json.dumps(log, ensure_ascii=False)}
 
@@ -287,7 +318,7 @@ facts:
 hypotheses:
 {json.dumps(hypotheses, ensure_ascii=False)}
 
-参考用ログ抜粋:
+log_excerpt:
 {json.dumps(log_lines[:10], ensure_ascii=False)}
 """
 
