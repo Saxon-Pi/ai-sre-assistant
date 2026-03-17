@@ -66,8 +66,27 @@ def parse_hypotheses(text: str) -> List[Dict[str, Any]]:
 
     return hypotheses[:3]
 
+# 出力のデータ構造を整形 (後続の choice ステートで使用する情報を付加)
+def build_hypotheses_result(items: List[Dict[str, Any]]) -> Dict[str, Any]:
+    top_confidence = 0
+    if items:
+        top_confidence = max(item.get("confidence", 0) for item in items)
+
+    return {
+        "items": items,                   # 仮説のリスト (title, reasoning, confidenceのセット)
+        "top_confidence": top_confidence, # リスト内の confidence の最大値
+        "count": len(items),              # 生成された仮説の件数
+    }
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     facts: Dict[str, Any] = event.get("facts", {})
+
+    # 再試行時の情報
+    loop: Dict[str, Any] = event.get("loop", {})
+    investigation: Dict[str, Any] = event.get("investigation", {})
+    retry_count = loop.get("retry_count", 0)
+    retry_reason = investigation.get("retry_reason", "")
+    extra_guidance = investigation.get("extra_guidance", "")
 
     # ログに明示されている例外名・エラー種別
     observed_error_type = facts.get("observed_error_type", "")
@@ -95,6 +114,9 @@ AWS、CloudWatch Logs、分散システム障害の原因分析に精通して�
 - 仮説は confidence が高い順に並べてください。
 - 同じ内容を表現違いで重複させないでください。
 - 一般論ではなく、与えられた facts にできるだけ結びついた仮説を出してください。
+- reasoning には、必ず facts または key_log_lines に基づく根拠を含めてください。
+- retry_count が 0 より大きい場合は、前回よりも facts と key_log_lines に強く結びついた仮説を優先してください。
+- retry_count が 0 より大きい場合は、一般的すぎる仮説を避けてください。
 
 [LANGUAGE RULES]
 - title は必ず日本語で書いてください。
@@ -144,6 +166,11 @@ title: 一時的な依存先の不整合
 reasoning: 依存するデータ更新タイミングのずれにより、条件付きチェックが一時的に失敗した可能性があります。
 confidence: 41
 
+[RETRY CONTEXT]
+retry_count: {retry_count}
+retry_reason: {retry_reason}
+extra_guidance: {extra_guidance}
+
 [INPUT DATA]
 primary_error_type: {primary_error_type}
 observed_error_type: {observed_error_type}
@@ -155,6 +182,5 @@ facts:
 """
 
     llm_output = invoke_claude(prompt, max_tokens=700)
-    hypotheses = parse_hypotheses(llm_output)
-
-    return hypotheses
+    items = parse_hypotheses(llm_output)
+    return build_hypotheses_result(items)
