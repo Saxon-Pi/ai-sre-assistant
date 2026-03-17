@@ -40,24 +40,28 @@ AI SRE アシスタント はこれらの作業を
 ``` mermaid
 flowchart TD
 
-A[API Gateway] --> B[Demo Lambda <br> （エラー発生起点）]
-
+A[API Gateway] --> B[Demo Lambda <br>（エラー発生起点）]
 B --> C[CloudWatch Logs]
-
 C --> D[Subscription Filter]
-
-D --> E[Log Ingest Lambda <br>（エラーログの取得、<br>ステートマシン起動）]
+D --> E[Log Ingest Lambda <br>（エラーログ取得、<br>ステートマシン起動）]
 
 E --> F[Step Functions]
 
-F --> G[Step1: Facts Lambda <br> （エラー情報の抽出）]
-G --> H[Step2: Hypotheses Lambda <br> （エラー原因の仮説生成）]
-H --> I[Step3: Finalize Lambda <br> （最終判断、<br>推奨アクション生成）]
+F --> G[Step1: Facts Lambda <br>（エラー情報の抽出）]
+G --> H[Initialize Loop Context <br>（retry_count 初期化）]
+H --> I[Step2: Hypotheses Lambda <br>（原因仮説の生成）]
+I --> J{Confidence Check}
 
-G --> J[Amazon Bedrock Claude]
-H --> J
-I --> J
-I --> K[Slack Notification <br> （分析結果の通知）]
+J -->|top_confidence >= 80| K[Step3: Finalize Lambda <br>（最終判断、<br>推奨アクション生成）]
+J -->|top_confidence < 80 <br> and retry_count < max_retries| L[Prepare Retry Context <br>（再試行条件更新）]
+L --> I
+J -->|retry_count >= max_retries| K
+
+G --> M[Amazon Bedrock Claude]
+I --> M
+K --> M
+
+K --> N[Slack 通知]
 ```
 
 ## アーキテクチャポイント
