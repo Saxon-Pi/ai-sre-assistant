@@ -160,14 +160,48 @@ export class AiSreAssistantStack extends cdk.Stack {
     // =====================================================
     
     /*
-    resultPath を使用して各ステップの実行履歴を管理する
+    resultPath を使用して各ステップの実行履歴を管理する (以下イメージ)
     {
-      "log": {...},
-      "facts": {...},
-      "hypotheses": [...],
-      "analysis": {...}
+      "log": { "...": "..." },
+      "facts": { "...": "..." },
+      "loop": {
+        "retry_count": 1,
+        "max_retries": 2
+      },
+      "investigation": {
+        "retry_reason": "top hypothesis confidence is below threshold",
+        "extra_guidance": "facts と key_log_lines により強く結びついた仮説を優先し..."
+      },
+      "hypotheses": {
+        "items": [
+          {
+            "title": "DynamoDB 条件付きチェックの不一致",
+            "reasoning": "key_log_lines に ConditionalCheckFailed が明示されており...",
+            "confidence": 86
+          },
+          {
+            "title": "アプリケーションの更新前提条件不整合",
+            "reasoning": "ConditionExpression が前提とするデータ状態と...",
+            "confidence": 73
+          }
+        ],
+        "top_confidence": 86,
+        "count": 2
+      },
+      "analysis": {
+        "severity": "P2",
+        "summary": "DynamoDB の条件付きチェック失敗により、一部機能で更新処理が正常に完了していない可能性があります。",
+        "recommended_actions": [
+          {
+            "priority": "high",
+            "action": "DynamoDB の ConditionExpression とアプリケーション側の更新条件を確認する。"
+          }
+        ]
+      }
     }
     */
+    
+    const MAX_RETRIES = 2; // stepHypos 最大試行回数
 
     const stepFacts = new tasks.LambdaInvoke(this, "ExtractFacts", {
       lambdaFunction: factsFn,
@@ -175,6 +209,24 @@ export class AiSreAssistantStack extends cdk.Stack {
       inputPath: "$",
       resultPath: "$.facts",
       outputPath: "$",
+    });
+
+    // ループ制御に使う状態 (state) の初期化
+    const stepInitLoopContext = new sfn.Pass(this, "InitializeLoopContext", {
+      result: sfn.Result.fromObject({
+        retry_count: 0,           // stepHypos 再試行回数カウンタ
+        max_retries: MAX_RETRIES, // 最大試行回数
+      }),
+      resultPath: "$.loop",
+    });
+
+    // 再試行時の追加プロンプトの初期化 (2周目から情報が付加される)
+    const stepInitInvestigationContext = new sfn.Pass(this, "InitializeInvestigationContext", {
+      result: sfn.Result.fromObject({
+        retry_reason: "",   // 再試行理由
+        extra_guidance: "", // 再試行時の指示
+      }),
+      resultPath: "$.investigation",
     });
 
     const stepHypos = new tasks.LambdaInvoke(this, "GenerateHypotheses", {
@@ -193,10 +245,62 @@ export class AiSreAssistantStack extends cdk.Stack {
       outputPath: "$",
     });
 
+    // stepHypos 再試行のための state 更新
+    const stepPrepareRetryContext = new sfn.Pass(this, "PrepareRetryContext", {
+      parameters: {
+        // 元の state を維持
+        "log.$": "$.log",
+        "facts.$": "$.facts",
+        "hypotheses.$": "$.hypotheses",
+
+        // retry_count (stepHypos試行回数)を +1
+        "loop.retry_count.$": "States.MathAdd($.loop.retry_count, 1)",
+        "loop.max_retries.$": "$.loop.max_retries",
+
+        // 再試行時にプロンプトに追加する文脈
+        "investigation.retry_reason": "top hypothesis confidence is below threshold",
+        "investigation.extra_guidance":
+          "facts と key_log_lines により強く結びついた仮説を優先し、一般論を避けてください。前回の仮説と重複しない観点があれば補ってください。",
+      },
+    });
+    
+    // Choice (stepHyposを再実行するか / stepFinalizeに進むか)
+    const stepCheckHyposConfidence = new sfn.Choice(this, "CheckHypothesisConfidence")
+      // 仮説が1件以上あり、top_confidence が閾値以上: stepFinalize に進む
+      .when(
+        sfn.Condition.and(
+          sfn.Condition.numberGreaterThan("$.hypotheses.count", 0),
+          sfn.Condition.numberGreaterThanEquals("$.hypotheses.top_confidence", 80)
+        ),
+        stepFinalize
+      )
+      // top_confidence が閾値以下で、再試行回数が MAX_RETRIES 未満: stepHypos 再実行
+      .when(
+        sfn.Condition.and(
+          sfn.Condition.numberLessThan("$.hypotheses.top_confidence", 80),
+          sfn.Condition.numberLessThan("$.loop.retry_count", MAX_RETRIES)
+        ),
+        stepPrepareRetryContext.next(stepHypos)
+      )
+      // 仮説が0件で、再試行回数が MAX_RETRIES 未満: stepHypos 再実行
+      .when(
+        sfn.Condition.and(
+          sfn.Condition.numberEquals("$.hypotheses.count", 0),
+          sfn.Condition.numberLessThan("$.loop.retry_count", MAX_RETRIES)
+        ),
+        stepPrepareRetryContext.next(stepHypos)
+      )
+      // それ以外は stepFinalize に進む (打ち切り)
+      .otherwise(stepFinalize);
+    
+    const definition = stepFacts
+      .next(stepInitLoopContext)
+      .next(stepInitInvestigationContext)
+      .next(stepHypos)
+      .next(stepCheckHyposConfidence);
+
     const stateMachine = new sfn.StateMachine(this, "AiSreAssistantStateMachine", {
-      definitionBody: sfn.DefinitionBody.fromChainable(
-        stepFacts.next(stepHypos).next(stepFinalize)
-      ),
+      definitionBody: sfn.DefinitionBody.fromChainable(definition),
       timeout: cdk.Duration.minutes(5),
     });
 
