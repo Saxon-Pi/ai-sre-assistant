@@ -274,15 +274,9 @@ export class AiSreAssistantStack extends cdk.Stack {
         ),
         stepFinalize
       )
-      // top_confidence が閾値以下で、再試行回数が MAX_RETRIES 未満: stepHypos 再実行
-      .when(
-        sfn.Condition.and(
-          sfn.Condition.numberLessThan("$.hypotheses.top_confidence", 80),
-          sfn.Condition.numberLessThan("$.loop.retry_count", MAX_RETRIES)
-        ),
-        stepPrepareRetryContext.next(stepHypos)
-      )
-      // 仮説が0件で、再試行回数が MAX_RETRIES 未満: stepHypos 再実行
+      // 再試行回数が MAX_RETRIES 未満 かつ、以下条件のどちらかに当てはまれば stepHypos 再実行
+      // ・top_confidence が閾値以下
+      // ・仮説が 0件
       .when(
         sfn.Condition.and(
           sfn.Condition.numberEquals("$.hypotheses.count", 0),
