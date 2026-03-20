@@ -156,17 +156,17 @@ confidence: <0-100 integer>
 1)
 title: DynamoDB 条件付きチェックの不一致
 reasoning: observed_error_type に ConditionalCheckFailed が含まれているため、DynamoDB の条件付き更新が期待した条件を満たしていない可能性があります。
-confidence: 81
+confidence: <0-100 integer>
 
 2)
 title: アプリケーションの状態管理ロジック不整合
 reasoning: 条件式が前提とするデータ状態と、実際のデータ状態が一致していない可能性があります。
-confidence: 66
+confidence: <0-100 integer>
 
 3)
 title: 一時的な依存先の不整合
 reasoning: 依存するデータ更新タイミングのずれにより、条件付きチェックが一時的に失敗した可能性があります。
-confidence: 38
+confidence: <0-100 integer>
 
 [RETRY CONTEXT]
 retry_count: {retry_count}
