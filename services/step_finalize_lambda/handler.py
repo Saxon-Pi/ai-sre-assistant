@@ -239,7 +239,11 @@ def parse_analysis(text: str) -> dict:
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     log = event.get("log", {})
     facts = event.get("facts", {})
-    hypotheses = event.get("hypotheses", [])
+    hypotheses_obj = event.get("hypotheses", {})
+
+    hypotheses = hypotheses_obj.get("items", [])
+    top_confidence = hypotheses_obj.get("top_confidence", 0)
+    hypothesis_count = hypotheses_obj.get("count", 0)
 
     log_group = log.get("log_group", "")
     log_stream = log.get("log_stream", "")
@@ -263,6 +267,7 @@ AWS 上の障害対応、インシデント優先度判定、初動対応、運�
 - observed_error_type が空で、inferred_error_type が存在する場合は、それを補助的な根拠として扱ってください。
 - error_type_confidence が低い場合は断定を避けてください。
 - hypotheses は原因候補であり、確定診断ではないことを前提に扱ってください。
+- hypotheses の top_confidence が低い場合は、summary でも断定を避けてください。
 - summary には、何が起きているか / 何が原因として有力か / どの程度の影響か、を簡潔に含めてください。
 - recommended_actions は、初動対応や追加調査として実行しやすい具体的な手順にしてください。
 - 破壊的操作（削除、停止、ロールバック実行など）を断定的に指示してはいけません。
@@ -309,6 +314,9 @@ recommended_actions:
 - [high|medium|low] <action>
 
 [INPUT DATA]
+top_confidence: {top_confidence}
+hypothesis_count: {hypothesis_count}
+
 log:
 {json.dumps(log, ensure_ascii=False)}
 
