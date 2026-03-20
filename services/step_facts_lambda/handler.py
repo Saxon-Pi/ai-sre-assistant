@@ -124,6 +124,8 @@ AWS、CloudWatch Logs、分散システム障害の初動分析に精通して�
 [CONFIDENCE RULES]
 - error_type_confidence は inferred_error_type に対する確信度を 0〜100 の整数で出してください。
 - 根拠が弱い場合は高すぎる confidence を付けないでください。
+- inferred_error_type が抽象的な表現（例: operation failure, processing error, unknown error）の場合、error_type_confidence は高くしないでください。
+- 明確な例外名やサービス名がログに含まれない場合、error_type_confidence は 60 以下にしてください。
 
 [OUTPUT SCHEMA]
 説明文や補足文は不要です。
@@ -145,7 +147,7 @@ key_log_lines:
 [EXAMPLE]
 observed_error_type: ConditionalCheckFailed
 inferred_error_type: DynamoDB conditional check failure
-error_type_confidence: 90
+error_type_confidence: 68
 timestamp:
 affected_service: DynamoDB
 http_status:

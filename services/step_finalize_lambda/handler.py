@@ -298,20 +298,23 @@ AWS 上の障害対応、インシデント優先度判定、初動対応、運�
 説明文や補足文は不要です。
 必ず次の形式だけで出力してください。
 
-[EXAMPLE]
-severity: P2
-summary: DynamoDB の条件付きチェック失敗により、一部機能で更新処理が正常に完了していない可能性があります。アプリケーションの ConditionExpression と更新前提条件の不一致が有力な原因です。
-recommended_actions:
-- [high] DynamoDB の ConditionExpression とアプリケーション側の更新条件を確認する。
-- [medium] CloudWatch Logs で同種エラーの発生件数と発生タイミングを確認する。
-- [low] DynamoDB 側の一時的なサービス異常がないか AWS Health とメトリクスを確認する。
-
 severity: <P0|P1|P2|P3>
 summary: <string>
 recommended_actions:
 - [high|medium|low] <action>
 - [high|medium|low] <action>
 - [high|medium|low] <action>
+
+[EXAMPLE]
+以下の出力例は参考であり、内容をそのまま使用してはいけません。
+summary と recommended_actions は必ず入力データに基づいて生成してください。
+
+severity: P2
+summary: ログに基づき、一部の処理でエラーが発生している可能性があります。主要な原因候補を確認してください。
+recommended_actions:
+- [high] ログに示されたエラー内容を確認する
+- [medium] 同種エラーの発生状況を確認する
+- [low] 関連サービスの状態を確認する
 
 [INPUT DATA]
 top_confidence: {top_confidence}
