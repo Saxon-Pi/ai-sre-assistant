@@ -73,19 +73,19 @@ Loop** を実装
 
 ## 特徴
 
--   confidence ベースの分岐（Step Functions Choice）
--   retry_count、max_retries によるループ制御（無限ループ防止）
--   再試行時に追加プロンプト（extra_guidance）を付与
+- confidence ベースの分岐（Step Functions Choice）
+- retry_count、max_retries によるループ制御（無限ループ防止）
+- 再試行時に追加プロンプト（extra_guidance）を付与
 
 ## 現在のアプローチ
 
--   再試行では「追加ガイダンス」による推論改善を実施
--   追加情報の付与は行わない
+- 再試行では「追加ガイダンス」による推論改善を実施
+- 新たな外部データ取得は行わず、プロンプト制御による推論精度向上を試みる設計
 
 ## 今後の改善ポイント
 
--   再試行時のログ探索範囲の拡張（幅広い視点で推論させる）
--   CloudWatch Metrics 連携（推論生成の参考情報の追加）
+- 再試行時のログ探索範囲の拡張（幅広い視点で推論させる）
+- CloudWatch Metrics 連携（推論生成の参考情報の追加）
 
 ------------------------------------------------------------------------
 
@@ -117,6 +117,17 @@ F --> G[Slack]
 
 # サンプル出力
 以下の画像は実際にエラー分析を実行した際の Slack 通知内容となる  
+
+1. 権限不足エラー（AccessDeniedException）  
+[iam-error-notification](./img/iam-error-notification.png)
+2. DynamoDB 条件付き書き込みエラー（ConditionalCheckFailed）  
+[dynamodb-error-notification](./img/dynamodb-error-notification.png)
+3. スロットリングエラー（ProvisionedThroughputExceededException）  
+[throttling-error-notification](./img/throttling-error-notification.png)
+4. JSON 形式エラー（JSONDecodeError）  
+[json-error-notification](./img/json-error-notification.png)
+5. 曖昧なエラー（(not detected)）  
+[ambiguous-error-notification](./img/ambiguous-error-notification.png)
 
 ------------------------------------------------------------------------
 
@@ -154,9 +165,11 @@ Step Functions により各ステップの入出力を保持することで LLM 
 - ログに基づく確定情報
 - LLM による推定
 
-## ④ Agent Loop による LLM 出力の精度向上
-曖昧なログが入力された時など、仮説 confidence が低い場合は仮説生成を再実行する   
-再実行のための retry context を設けることで追加指示や入力情報の拡張をすることが可能  
+### ④ LLM の不確実性を前提とした設計
+
+LLM の出力は必ずしも安定しないため、
+confidence による分岐や再試行（Agent Loop）を設けることで、
+推論結果のばらつきを制御する設計とした
 
 ### ⑤ 将来拡張しやすいアーキテクチャ
 
@@ -165,6 +178,24 @@ Step Functions を採用することで、将来的に以下のような拡張�
 - Choice 分岐による追加調査
 - Agent 型のインシデント調査フロー
 - メトリクスや関連ログの追加取得
+
+------------------------------------------------------------------------
+
+# 苦労したポイント
+
+### 出力形式（日本語表記、JSONなど）の指示を LLM が守らないケースがある
+- エラーに繋がるため、守らなかった場合を想定した構造化処理の実装が必要となった  
+
+### プロンプトに記載した出力の具体例を、そのまま出力してくることがある
+- 具体例は出力形式を安定させるのに有効だが、流用できないように抽象化させた方が良い
+
+### 生成した回答の confidence を LLM 自身が高く評価しがち
+- 仮説生成ステップの top_confidence が常に 80~90 になる
+    - おそらく「仮説を生成できた」時点で高評価となるため、LLM が必要以上に評価を高くしないような指示が必要
+- Agent loop で confidence を基準に再試行の判断をする場合、実際の出力を確認しながらの閾値調整が必要となる
+  
+総じて、LLM を実運用に組み込む際は、
+「プロンプト設計」だけでなく「制御ロジック（Step Functions等）」との組み合わせが重要であると実感した
 
 ------------------------------------------------------------------------
 
