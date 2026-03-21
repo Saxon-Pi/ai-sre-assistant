@@ -23,19 +23,19 @@ Bedrock（Claude）を組み合わせ、ログから以下の情報を自動生�
 
 # システムの目的
 
-インフラ・アプリのインシデント対応では、以下の作業に多くの時間が掛かる
+インフラ・アプリのインシデント対応では以下の作業に多くの時間がかかる
 
 -   ログ調査
 -   エラー分類
 -   原因推定
 -   対処方針の検討
 
-AI SRE アシスタント はこれらの作業を
-**LLM推論パイプライン**として自動化し、インシデントの初期対応を支援することを目的としている
+本システムはこれらを **LLM推論パイプライン**として自動化し、
+初期対応の高速化を目的としている
 
 ------------------------------------------------------------------------
 
-# システムアーキテクチャ
+# システムアーキテクチャ（Agent Loop 対応）
 
 ``` mermaid
 flowchart TD
@@ -52,24 +52,40 @@ G --> H[Initialize Loop Context <br>（retry_count 初期化）]
 H --> I[Step2: Hypotheses Lambda <br>（原因仮説の生成）]
 I --> J{Confidence Check}
 
-J -->|top_confidence >= 80| K[Step3: Finalize Lambda <br>（最終判断、<br>推奨アクション生成）]
-J -->|top_confidence < 80 <br> and retry_count < max_retries| L[Prepare Retry Context <br>（再試行条件更新）]
+J -->|top_confidence >= 85| K[Step3: Finalize Lambda <br>（最終判断、<br>推奨アクション生成）]
+J -->|低confidence + 再試行可能| L[Prepare Retry Context]
 L --> I
-J -->|retry_count >= max_retries| K
+J -->|再試行回数上限| K
 
-G --> M[Amazon Bedrock Claude]
+G --> M[Amazon Bedrock]
 I --> M
 K --> M
 
 K --> N[Slack 通知]
 ```
 
-## アーキテクチャポイント
+------------------------------------------------------------------------
 
-- **CloudWatch Logs Subscription Filter** が分析パイプラインを自動起動
-- **Step Functions** により LLM 推論を段階的に制御
-- **Amazon Bedrock Claude** がログ分析を実行
-- **Slack 通知** によりインシデント情報を即時共有
+# Agent Loop
+
+仮説の信頼度（confidence）に応じて、 Hypotheses（仮説生成ステップ）を再実行する **Agent
+Loop** を実装
+
+## 特徴
+
+-   confidence ベースの分岐（Step Functions Choice）
+-   retry_count、max_retries によるループ制御（無限ループ防止）
+-   再試行時に追加プロンプト（extra_guidance）を付与
+
+## 現在のアプローチ
+
+-   再試行では「追加ガイダンス」による推論改善を実施
+-   追加情報の付与は行わない
+
+## 今後の改善ポイント
+
+-   再試行時のログ探索範囲の拡張（幅広い視点で推論させる）
+-   CloudWatch Metrics 連携（推論生成の参考情報の追加）
 
 ------------------------------------------------------------------------
 
@@ -78,10 +94,13 @@ K --> N[Slack 通知]
 ``` mermaid
 flowchart LR
 
-A[Logs] --> B[Facts Extraction]
-B --> C[Hypothesis Generation]
-C --> D[Incident Analysis]
-D --> E[Slack Notification]
+A[Logs] --> B[Facts]
+B --> C[Hypotheses]
+C --> D{Confidence}
+D -->|低| E[Retry]
+E --> C
+D -->|高| F[Analysis]
+F --> G[Slack]
 ```
 
 インシデント分析を単一の LLM で行うのではなく、
@@ -97,9 +116,7 @@ D --> E[Slack Notification]
 ------------------------------------------------------------------------
 
 # サンプル出力
-追加予定  
-1. Slack通知の抜粋  
-2. Step Functions の最終 state の抜粋  
+以下の画像は実際にエラー分析を実行した際の Slack 通知内容となる  
 
 ------------------------------------------------------------------------
 
@@ -137,7 +154,11 @@ Step Functions により各ステップの入出力を保持することで LLM 
 - ログに基づく確定情報
 - LLM による推定
 
-### ④ 将来拡張しやすいアーキテクチャ
+## ④ Agent Loop による LLM 出力の精度向上
+曖昧なログが入力された時など、仮説 confidence が低い場合は仮説生成を再実行する   
+再実行のための retry context を設けることで追加指示や入力情報の拡張をすることが可能  
+
+### ⑤ 将来拡張しやすいアーキテクチャ
 
 Step Functions を採用することで、将来的に以下のような拡張を容易に追加できる
 
@@ -166,6 +187,7 @@ AI Engineering
 
 - Prompt Engineering
 - Prompt Chaining
+- Agent Loop
 - Structured LLM Output
 - LLM Orchestration
 
@@ -173,9 +195,7 @@ AI Engineering
 
 # 今後の拡張（予定）
 
-- Choice分岐による調査フロー
-- Agent型インシデント調査
+- 調査型 Agent Loop
 - 類似インシデント検索（Vector DB / RAG）
-- 長期インシデントメモリ
-- CloudWatch Metrics 相関分析
-- 推論の重複抑制 / クールダウン
+- CloudWatch Metrics 分析
+- コスト制御（スロットリング / クールダウン）
