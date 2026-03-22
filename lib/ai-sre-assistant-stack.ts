@@ -249,18 +249,22 @@ export class AiSreAssistantStack extends cdk.Stack {
     const stepPrepareRetryContext = new sfn.Pass(this, "PrepareRetryContext", {
       parameters: {
         // 元の state を維持
-        "log.$": "$.log",
-        "facts.$": "$.facts",
-        "hypotheses.$": "$.hypotheses",
+        log: sfn.JsonPath.objectAt("$.log"),
+        facts: sfn.JsonPath.objectAt("$.facts"),
+        hypotheses: sfn.JsonPath.objectAt("$.hypotheses"),
 
         // retry_count (stepHypos試行回数)を +1
-        "loop.retry_count.$": "States.MathAdd($.loop.retry_count, 1)",
-        "loop.max_retries.$": "$.loop.max_retries",
+        loop: {
+          "retry_count.$": "States.MathAdd($.loop.retry_count, 1)",
+          "max_retries.$": "$.loop.max_retries",
+        },
 
         // 再試行時にプロンプトに追加する文脈
-        "investigation.retry_reason": "top hypothesis confidence is below threshold",
-        "investigation.extra_guidance":
-          "facts と key_log_lines により強く結びついた仮説を優先し、一般論を避けてください。前回の仮説と重複しない観点があれば補ってください。",
+        investigation: {
+          retry_reason: "top hypothesis confidence is below threshold",
+          extra_guidance:
+            "facts と key_log_lines により強く結びついた仮説を優先し、一般論を避けてください。前回の仮説と重複しない観点があれば補ってください。",
+        },
       },
     });
     
@@ -270,19 +274,19 @@ export class AiSreAssistantStack extends cdk.Stack {
       .when(
         sfn.Condition.and(
           sfn.Condition.numberGreaterThan("$.hypotheses.count", 0),
-          sfn.Condition.numberGreaterThanEquals("$.hypotheses.top_confidence", 80)
+          sfn.Condition.numberGreaterThanEquals("$.hypotheses.top_confidence", 85)
         ),
         stepFinalize
       )
       // 再試行回数が MAX_RETRIES 未満 かつ、以下条件のどちらかに当てはまれば stepHypos 再実行
-      // ・top_confidence が閾値以下
+      // ・top_confidence が閾値未満
       // ・仮説 (hypotheses.items) が 0件
       .when(
         sfn.Condition.and(
           sfn.Condition.numberLessThan("$.loop.retry_count", MAX_RETRIES),
           sfn.Condition.or(
             sfn.Condition.numberEquals("$.hypotheses.count", 0),
-            sfn.Condition.numberLessThan("$.hypotheses.top_confidence", 80)
+            sfn.Condition.numberLessThan("$.hypotheses.top_confidence", 85)
           )
         ),
         sfn.Chain.start(stepPrepareRetryContext).next(stepHypos)

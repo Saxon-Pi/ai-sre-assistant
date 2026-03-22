@@ -128,8 +128,10 @@ AWS、CloudWatch Logs、分散システム障害の原因分析に精通して�
 
 [CONFIDENCE RULES]
 - confidence は 0〜100 の整数で出してください。
-- confidence は「その仮説がもっとも有力である度合い」を表してください。
-- 根拠が弱い場合は高すぎる confidence を付けないでください。
+- confidence は「その仮説の信頼度」を表し、根拠が弱い場合は低い数値にしてください。
+- observed_error_type、inferred_error_type、key_log_lines に明確な AWS サービス名や例外名が観測されない場合、confidence は 80 未満にしてください。
+- observed_error_type が空で、inferred_error_type が抽象的な表現の場合、top confidence は 70 以下にしてください。
+- facts.error_type_confidence を上回る confidence を安易に付けてはいけません。
 
 [OUTPUT SCHEMA]
 説明文や補足文は不要です。
@@ -154,17 +156,17 @@ confidence: <0-100 integer>
 1)
 title: DynamoDB 条件付きチェックの不一致
 reasoning: observed_error_type に ConditionalCheckFailed が含まれているため、DynamoDB の条件付き更新が期待した条件を満たしていない可能性があります。
-confidence: 90
+confidence: <0-100 integer>
 
 2)
 title: アプリケーションの状態管理ロジック不整合
 reasoning: 条件式が前提とするデータ状態と、実際のデータ状態が一致していない可能性があります。
-confidence: 72
+confidence: <0-100 integer>
 
 3)
 title: 一時的な依存先の不整合
 reasoning: 依存するデータ更新タイミングのずれにより、条件付きチェックが一時的に失敗した可能性があります。
-confidence: 41
+confidence: <0-100 integer>
 
 [RETRY CONTEXT]
 retry_count: {retry_count}
