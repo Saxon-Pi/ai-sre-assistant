@@ -119,15 +119,19 @@ F --> G[Slack]
 以下の画像は実際にエラー分析を実行した際の Slack 通知内容となる  
 
 1. 権限不足エラー（AccessDeniedException）  
-[iam-error-notification](./img/iam-error-notification.png)
+![iam-error-notification](./img/iam-error-notification.png)
+
 2. DynamoDB 条件付き書き込みエラー（ConditionalCheckFailed）  
-[dynamodb-error-notification](./img/dynamodb-error-notification.png)
+![dynamodb-error-notification](./img/dynamodb-error-notification.png)
+
 3. スロットリングエラー（ProvisionedThroughputExceededException）  
-[throttling-error-notification](./img/throttling-error-notification.png)
+![throttling-error-notification](./img/throttling-error-notification.png)
+
 4. JSON 形式エラー（JSONDecodeError）  
-[json-error-notification](./img/json-error-notification.png)
-5. 曖昧なエラー（(not detected)）  
-[ambiguous-error-notification](./img/ambiguous-error-notification.png)
+![json-error-notification](./img/json-error-notification.png)
+
+5. 曖昧なエラー（not detected）  
+![ambiguous-error-notification](./img/ambiguous-error-notification.png)
 
 ------------------------------------------------------------------------
 
