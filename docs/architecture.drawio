@@ -1,0 +1,109 @@
+<mxfile host="Electron" agent="ChatGPT">
+  <diagram id="bd9114d13f104c8c81c24a7e9d149840" name="Architecture">
+    <mxGraphModel dx="1230" dy="747" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=22;fontStyle=1;align=center;verticalAlign=middle;" value="AI Error Log Analysis Assistant Architecture" vertex="1">
+          <mxGeometry height="45" width="650" x="420" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="aws" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#005BAA;dashed=0;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacing=12;" value="AWS Cloud" vertex="1">
+          <mxGeometry height="620" width="1040" x="260" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="demo" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8EF;strokeColor=#FFCC80;dashed=1;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacing=12;" value="Demo Application" vertex="1">
+          <mxGeometry height="250" width="270" x="300" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="detect" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7FBFF;strokeColor=#90CAF9;dashed=1;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacing=12;" value="Log Detection" vertex="1">
+          <mxGeometry height="250" width="300" x="610" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="ai" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8F8FF;strokeColor=#C5CAE9;dashed=1;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacing=12;" value="AI Analysis Workflow" vertex="1">
+          <mxGeometry height="250" width="300" x="950" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="notify" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7FCF7;strokeColor=#A5D6A7;dashed=1;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacing=12;" value="Notification" vertex="1">
+          <mxGeometry height="200" width="300" x="950" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="external" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF7F7;strokeColor=#EF9A9A;dashed=1;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacing=12;" value="External" vertex="1">
+          <mxGeometry height="200" width="150" x="50" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="User / Test Client" vertex="1">
+          <mxGeometry height="70" width="150" x="60" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="apigw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="API Gateway&lt;br&gt;Demo API" vertex="1">
+          <mxGeometry height="70" width="160" x="330" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="app_lambda" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#6A1B9A;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Demo Lambda&lt;br&gt;Error Source" vertex="1">
+          <mxGeometry height="70" width="160" x="330" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="cwlogs" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#EF6C00;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="CloudWatch Logs&lt;br&gt;Error Logs" vertex="1">
+          <mxGeometry height="70" width="170" x="640" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="subscription" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#EF6C00;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Subscription Filter&lt;br&gt;ERROR / Exception" vertex="1">
+          <mxGeometry height="70" width="170" x="640" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="ingest" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#6A1B9A;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Log Ingest Lambda&lt;br&gt;Start Execution" vertex="1">
+          <mxGeometry height="70" width="170" x="640" y="425" as="geometry" />
+        </mxCell>
+        <mxCell id="sfn" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#512DA8;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Step Functions&lt;br&gt;LLM Analysis Workflow&lt;br&gt;Facts → Hypotheses → Finalize" vertex="1">
+          <mxGeometry height="100" width="230" x="980" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="bedrock" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFDE7;strokeColor=#F9A825;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Amazon Bedrock&lt;br&gt;Claude" vertex="1">
+          <mxGeometry height="70" width="160" x="1120" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="secret" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8EAF6;strokeColor=#283593;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Secrets Manager&lt;br&gt;Slack Webhook" vertex="1">
+          <mxGeometry height="70" width="190" x="880" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="slack_lambda" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#6A1B9A;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Finalize Lambda&lt;br&gt;Slack Notify" vertex="1">
+          <mxGeometry height="70" width="190" x="990" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="slack" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#C62828;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Slack Channel&lt;br&gt;AI Analysis Result" vertex="1">
+          <mxGeometry height="80" width="130" x="60" y="555" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="client" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="apigw" value="GET /demo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="apigw" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="app_lambda" value="Invoke">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="app_lambda" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="cwlogs" value="Write logs">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="325" />
+              <mxPoint x="540" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="cwlogs" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="subscription" value="Match error">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="subscription" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="ingest" value="Trigger">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="ingest" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="sfn" value="Start workflow">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="860" y="460" />
+              <mxPoint x="860" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="sfn" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#512DA8;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="bedrock" value="Invoke LLM">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="sfn" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="slack_lambda" value="Finalize state">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1095" y="490" />
+              <mxPoint x="1095" y="490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="slack_lambda" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="secret" value="Get webhook">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="slack_lambda" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="slack" value="Post message">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

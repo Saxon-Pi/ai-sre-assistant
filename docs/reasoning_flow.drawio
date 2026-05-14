@@ -1,0 +1,84 @@
+<mxfile host="Electron" agent="ChatGPT">
+  <diagram id="5435ebd4e7414f3381588853b1bf8534" name="Prompt Chaining Flow">
+    <mxGraphModel dx="1414" dy="859" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=24;fontStyle=1;align=center;verticalAlign=middle;" value="Prompt Chaining / Agent Loop Flow" vertex="1">
+          <mxGeometry height="45" width="650" x="420" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="workflow" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#005BAA;dashed=0;fontSize=16;fontStyle=1;align=left;verticalAlign=top;spacing=12;" value="Step Functions Internal Workflow" vertex="1">
+          <mxGeometry height="600" width="1340" x="80" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="logs" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#EF6C00;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="CloudWatch Logs&lt;br&gt;Error log lines" vertex="1">
+          <mxGeometry height="80" width="170" x="70" y="285" as="geometry" />
+        </mxCell>
+        <mxCell id="facts" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#1565C0;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Step 1: Facts&lt;br&gt;観測事象を抽出&lt;br&gt;&lt;br&gt;observed_error_type&lt;br&gt;inferred_error_type&lt;br&gt;key_log_lines" vertex="1">
+          <mxGeometry height="150" width="210" x="310" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="hypo" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDE7F6;strokeColor=#512DA8;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Step 2: Hypotheses&lt;br&gt;原因仮説を生成&lt;br&gt;&lt;br&gt;title&lt;br&gt;reasoning&lt;br&gt;confidence" vertex="1">
+          <mxGeometry height="150" width="210" x="600" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="confidence" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFDE7;strokeColor=#F9A825;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Confidence Check&lt;br&gt;&lt;br&gt;top_confidence &gt;= 85 ?" vertex="1">
+          <mxGeometry height="110" width="190" x="890" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="retry" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#C62828;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Prepare Retry Context&lt;br&gt;&lt;br&gt;retry_count + 1&lt;br&gt;extra_guidance" vertex="1">
+          <mxGeometry height="120" width="210" x="600" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="finalize" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#2E7D32;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Step 3: Finalize&lt;br&gt;要約・推奨アクション生成&lt;br&gt;&lt;br&gt;severity&lt;br&gt;summary&lt;br&gt;recommended_actions" vertex="1">
+          <mxGeometry height="170" width="210" x="1190" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="slack" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#C62828;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Slack 通知&lt;br&gt;分析結果を共有" vertex="1">
+          <mxGeometry height="90" width="210" x="1190" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="bedrock" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFDE7;strokeColor=#F9A825;fontSize=14;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="Amazon Bedrock&lt;br&gt;Claude" vertex="1">
+          <mxGeometry height="70" width="190" x="670" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="f1" edge="1" parent="1" source="logs" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="facts" value="log input">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f2" edge="1" parent="1" source="facts" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="hypo" value="facts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f3" edge="1" parent="1" source="hypo" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="confidence" value="hypotheses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f4" edge="1" parent="1" source="confidence" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="finalize" value="confidence 高 / 上限到達">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f5" edge="1" parent="1" source="confidence" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="retry" value="confidence 低">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1020" y="560" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f6" edge="1" parent="1" source="retry" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#C62828;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="hypo" value="追加ガイダンスで再推論">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="f7" edge="1" parent="1" source="finalize" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="slack" value="notify">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="b1" edge="1" parent="1" source="facts" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=1;strokeColor=#999999;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="bedrock" value="Invoke">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="440" y="180" />
+              <mxPoint x="765" y="180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="b2" edge="1" parent="1" source="hypo" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=1;strokeColor=#999999;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="bedrock" value="Invoke">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" edge="1" parent="1" source="finalize" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=1;strokeColor=#999999;fontSize=12;edgeStyle=orthogonalEdgeStyle;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="bedrock" value="Invoke">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1290" y="180" />
+              <mxPoint x="765" y="180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
