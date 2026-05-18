@@ -26,12 +26,12 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="f2" edge="1" parent="1" source="facts" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="hypo" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;facts&lt;/font&gt;">
-          <mxGeometry relative="1" y="30" as="geometry">
+          <mxGeometry relative="1" y="20" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="f3" edge="1" parent="1" source="hypo" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="finalize" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;hypotheses&lt;/font&gt;">
-          <mxGeometry relative="1" y="30" as="geometry">
+          <mxGeometry relative="1" x="0.0417" y="20" as="geometry">
             <mxPoint as="offset" />
             <mxPoint x="1060" y="330" as="targetPoint" />
           </mxGeometry>
