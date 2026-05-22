@@ -1,19 +1,20 @@
 # AI SRE アシスタント
 
 AI SRE アシスタントは LLM を用いて CloudWatch Logs を解析し、  
-インシデントの原因分析を自動生成する**AI支援SREツールのプロトタイプ**である  
-*SRE: Site Reliability Engineering
+インシデントの原因分析を自動生成する **AI支援SREツールのプロトタイプ** である  
+*SRE: Site Reliability Engineering*  
 
-Step Functions による **LLM推論オーケストレーション**と Amazon
-Bedrock（Claude）を組み合わせ、ログから以下の情報を自動生成する
+Step Functions による **LLM推論オーケストレーション**と Amazon Bedrock（Claude）を組み合わせ、  
+ログから以下の情報を自動生成する  
 
 - 観測事象（Facts）
 - 原因仮説（Hypotheses）
 - インシデント要約（Summary）
 - 推奨アクション（Recommended actions）
 
-本システムはインシデント分析・対応という実務上の課題を、
-以下の技術検証・学習を兼ねて実装することをテーマに作成した
+本システムはインシデント分析・対応という実務上の課題を、  
+以下の技術検証・学習を兼ねて実装することをテーマに作成した  
+
 - LLM オーケストレーション（Step Functions による Prompt Chaining）
 - サーバレスな AIアーキテクチャ（Bedrock + Lambda）
 - プロンプトエンジニアリング
@@ -35,41 +36,53 @@ Bedrock（Claude）を組み合わせ、ログから以下の情報を自動生�
 
 ------------------------------------------------------------------------
 
-# システムアーキテクチャ（Agent Loop 対応）
+# システムアーキテクチャ
 
-``` mermaid
-flowchart TD
+![アーキテクチャ図](./docs/architecture.png)
 
-A[API Gateway] --> B[Demo Lambda <br>（エラー発生起点）]
-B --> C[CloudWatch Logs]
-C --> D[Subscription Filter]
-D --> E[Log Ingest Lambda <br>（エラーログ取得、<br>ステートマシン起動）]
+------------------------------------------------------------------------
 
-E --> F[Step Functions]
+# なぜ Step Functions を使うのか
 
-F --> G[Step1: Facts Lambda <br>（エラー情報の抽出）]
-G --> H[Initialize Loop Context <br>（retry_count 初期化）]
-H --> I[Step2: Hypotheses Lambda <br>（原因仮説の生成）]
-I --> J{Confidence Check}
+本システムでは、LLM を単なるチャットではなく、  
+「状態を持つ推論システム」として扱うことを重視している  
 
-J -->|top_confidence >= 85| K[Step3: Finalize Lambda <br>（最終判断、<br>推奨アクション生成）]
-J -->|低confidence + 再試行可能| L[Prepare Retry Context]
-L --> I
-J -->|再試行回数上限| K
+Step Functions を利用することで、  
+各推論ステップの状態管理、分岐、再試行、入出力保持をシステム側で明示的に制御できる  
 
-G --> M[Amazon Bedrock]
-I --> M
-K --> M
+これにより、以下を実装しやすくしている  
 
-K --> N[Slack 通知]
-```
+- 推論過程の追跡
+- confidence による制御
+- Agent Loop
+- 将来的な調査型 Workflow 拡張
+
+------------------------------------------------------------------------
+
+# AI 推論フロー（Prompt Chaining）
+
+Facts → Hypotheses → Finalize の3段階で推論を行う  
+
+![AI推論フロー図](./docs/reasoning_flow.png)
+
+このように、インシデント分析を単一の LLM で行うのではなく、  
+複数の LLM 推論を段階的に実行する **Prompt Chaining** を採用している  
+
+メリットは以下となる  
+
+- 推論精度向上
+- 推論過程の可視化
+- デバッグ容易性
+- プロンプト制御性
 
 ------------------------------------------------------------------------
 
 # Agent Loop
 
-仮説の信頼度（confidence）に応じて、 Hypotheses（仮説生成ステップ）を再実行する **Agent
-Loop** を実装
+仮説の信頼度（confidence）に応じて、  
+Hypotheses（仮説生成ステップ）を再実行する **Agent Loop** を実装
+
+![AgentLoop図](./docs/agent_loop_confidence_based_retry.png)
 
 ## 特徴
 
@@ -89,49 +102,23 @@ Loop** を実装
 
 ------------------------------------------------------------------------
 
-# AI 推論フロー（Prompt Chaining）
-
-``` mermaid
-flowchart LR
-
-A[Logs] --> B[Facts]
-B --> C[Hypotheses]
-C --> D{Confidence}
-D -->|低| E[Retry]
-E --> C
-D -->|高| F[Analysis]
-F --> G[Slack]
-```
-
-インシデント分析を単一の LLM で行うのではなく、
-複数の LLM 推論を段階的に実行する **Prompt Chaining** を採用している 
-
-メリット:
-
-- 推論精度向上
-- 推論過程の可視化
-- デバッグ容易性
-- プロンプト制御性
-
-------------------------------------------------------------------------
-
 # サンプル出力
 以下の画像は実際にエラー分析を実行した際の Slack 通知内容となる  
 
 1. 権限不足エラー（AccessDeniedException）  
-![iam-error-notification](./img/iam-error-notification.png)
+![iam-error-notification](./docs/img/iam-error-notification.png)
 
 2. DynamoDB 条件付き書き込みエラー（ConditionalCheckFailed）  
-![dynamodb-error-notification](./img/dynamodb-error-notification.png)
+![dynamodb-error-notification](./docs/img/dynamodb-error-notification.png)
 
 3. スロットリングエラー（ProvisionedThroughputExceededException）  
-![throttling-error-notification](./img/throttling-error-notification.png)
+![throttling-error-notification](./docs/img/throttling-error-notification.png)
 
 4. JSON 形式エラー（JSONDecodeError）  
-![json-error-notification](./img/json-error-notification.png)
+![json-error-notification](./docs/img/json-error-notification.png)
 
 5. 曖昧なエラー（not detected）  
-![ambiguous-error-notification](./img/ambiguous-error-notification.png)
+![ambiguous-error-notification](./docs/img/ambiguous-error-notification.png)
 
 ------------------------------------------------------------------------
 
