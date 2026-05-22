@@ -1,0 +1,73 @@
+<mxfile host="Electron">
+  <diagram id="5435ebd4e7414f3381588853b1bf8534" name="Prompt Chaining Flow">
+    <mxGraphModel dx="1488" dy="904" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="8" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FFFFFF;fontSize=26;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="" vertex="1">
+          <mxGeometry height="450" width="10" x="190" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="hypo" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAFCFF;strokeColor=#006666;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;spacing=8;shadow=1;glass=0;arcSize=6;fontFamily=Helvetica;" value="&lt;font&gt;Step 2: Hypotheses&lt;br&gt;facts をもとに&lt;/font&gt;&lt;div&gt;&lt;font&gt;原因仮説を生成&lt;br&gt;&lt;br&gt;title&lt;br&gt;reasoning&lt;br&gt;confidence&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="160" width="250" x="220" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="finalize" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4EA;strokeColor=#663300;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;spacing=8;shadow=1;glass=0;arcSize=6;fontFamily=Helvetica;" value="Step 3: Finalize&lt;br&gt;要約・推奨アクション生成&lt;br&gt;&lt;br&gt;severity&lt;br&gt;summary&lt;br&gt;recommended_actions" vertex="1">
+          <mxGeometry height="160" width="250" x="985" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="f3" edge="1" parent="1" source="hypo" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="6" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;hypotheses&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;（仮説）&lt;/font&gt;&lt;/div&gt;">
+          <mxGeometry relative="1" y="30" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="500" y="245" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f4" edge="1" parent="1" source="6" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="finalize" value="&lt;div&gt;&lt;font color=&quot;#ff0000&quot;&gt;&lt;span style=&quot;font-size: 18px;&quot;&gt;&lt;b&gt;高信頼度&lt;/b&gt;&lt;/span&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#ff0000&quot;&gt;&lt;span style=&quot;font-size: 18px;&quot;&gt;&lt;b&gt;(top_confidence &amp;gt;= 85)&lt;/b&gt;&lt;/span&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;div&gt;&lt;b style=&quot;&quot;&gt;&lt;font style=&quot;color: rgb(255, 0, 0); font-size: 18px;&quot;&gt;/ リトライ上限到達&lt;/font&gt;&lt;/b&gt;&lt;/div&gt;&lt;/div&gt;">
+          <mxGeometry relative="1" y="40" as="geometry">
+            <mxPoint x="-1" as="offset" />
+            <mxPoint x="690" y="245" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f5" edge="1" parent="1" source="6" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="7" value="&lt;font style=&quot;color: rgb(255, 0, 0); font-size: 18px;&quot;&gt;&lt;b&gt;&lt;font&gt;低信頼度&lt;/font&gt;&lt;br&gt;&lt;/b&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(255, 0, 0); font-size: 18px;&quot;&gt;&lt;b&gt;(top_confidence &amp;lt; 85)&lt;/b&gt;&lt;/font&gt;&lt;/div&gt;">
+          <mxGeometry relative="1" x="-0.6904" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="630" y="300" as="sourcePoint" />
+            <mxPoint x="420" y="480" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f6" edge="1" parent="1" source="7" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#C62828;fontSize=12;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" target="hypo" value="&lt;font style=&quot;color: rgb(255, 0, 0); font-size: 18px;&quot;&gt;&lt;b style=&quot;&quot;&gt;追加ガイダンスで再推論&lt;/b&gt;&lt;/font&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="275" y="450" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6" parent="1" style="rhombus;shadow=1;fontStyle=1;fontSize=18;fontColor=#FF0000;" value="&#xa;top_confidence&#xa;&gt;= 85" vertex="1">
+          <mxGeometry height="138" width="200" x="580" y="181" as="geometry" />
+        </mxCell>
+        <mxCell id="7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;shadow=1;" value="&lt;span style=&quot;font-weight: 700;&quot;&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;再試行コンテキスト更新&lt;/font&gt;&lt;/span&gt;&lt;div&gt;&lt;font style=&quot;font-size: 18px;&quot;&gt;&lt;font style=&quot;&quot;&gt;&lt;br style=&quot;scrollbar-color: light-dark(#e2e2e2, #4b4b4b)&amp;lt;br/&amp;gt;&#x9;&#x9;&#x9;&#x9;&#x9;light-dark(#fbfbfb, var(--dark-panel-color)); font-weight: 700;&quot;&gt;&lt;/font&gt;&lt;span style=&quot;font-weight: 700;&quot;&gt;retry_count + 1&lt;/span&gt;&lt;br style=&quot;scrollbar-color: light-dark(#e2e2e2, #4b4b4b)&amp;lt;br/&amp;gt;&#x9;&#x9;&#x9;&#x9;&#x9;light-dark(#fbfbfb, var(--dark-panel-color)); font-weight: 700;&quot;&gt;&lt;span style=&quot;font-weight: 700;&quot;&gt;extra_guidance&lt;/span&gt;&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="106.25" width="250" x="220" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FFFFFF;fontSize=26;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="" vertex="1">
+          <mxGeometry height="10" width="840" x="260" y="591.25" as="geometry" />
+        </mxCell>
+        <mxCell id="10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FFFFFF;fontSize=26;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="" vertex="1">
+          <mxGeometry height="430" width="10" x="1250" y="116.25" as="geometry" />
+        </mxCell>
+        <mxCell id="15" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.lambda_function;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="440" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="16" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#ED7100;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.lambda_function;" value="" vertex="1">
+          <mxGeometry height="30" width="30" x="1205" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="wG6OAsmQPklC_-nAv9mQ-16" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;&lt;b style=&quot;background-color: rgb(255, 255, 255);&quot;&gt;仮説の信頼度チェック&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="20" width="190" x="585" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="wG6OAsmQPklC_-nAv9mQ-17" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=26;fontStyle=1;align=center;verticalAlign=middle;" value="&lt;span style=&quot;font-size: 28px;&quot;&gt;Agent Loop - Confidence-based Retry&lt;/span&gt;" vertex="1">
+          <mxGeometry height="45" width="610" x="375" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="wG6OAsmQPklC_-nAv9mQ-18" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;span style=&quot;background-color: rgb(255, 255, 255);&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;Step Functions&lt;/font&gt;&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;background-color: rgb(255, 255, 255);&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;Choice&lt;/font&gt;&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="130" x="712" y="282" as="geometry" />
+        </mxCell>
+        <mxCell id="wG6OAsmQPklC_-nAv9mQ-20" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;span style=&quot;background-color: rgb(255, 255, 255);&quot;&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;Step Functions&lt;/font&gt;&lt;/span&gt;&lt;div&gt;&lt;span style=&quot;font-size: 14px; background-color: rgb(255, 255, 255);&quot;&gt;Pass state&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="130" x="280" y="550.25" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

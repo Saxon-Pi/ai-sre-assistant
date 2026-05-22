@@ -1,0 +1,54 @@
+<mxfile host="Electron">
+  <diagram id="5435ebd4e7414f3381588853b1bf8534" name="Prompt Chaining Flow">
+    <mxGraphModel dx="1414" dy="859" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1500" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="8" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FFFFFF;fontSize=26;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="" vertex="1">
+          <mxGeometry height="350" width="10" x="40" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;fontSize=26;fontStyle=1;align=center;verticalAlign=middle;" value="&lt;font style=&quot;font-size: 28px;&quot;&gt;Prompt Chaining 3 Steps&lt;/font&gt;" vertex="1">
+          <mxGeometry height="45" width="380" x="90" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="facts" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAFFE5;strokeColor=#336600;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;spacing=8;shadow=1;glass=0;arcSize=6;" value="&lt;font style=&quot;color: rgb(0, 0, 0); font-size: 21px;&quot;&gt;Step 1: Facts（事実）&lt;br&gt;&lt;div style=&quot;&quot;&gt;観測事象を抽出&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;・ログから確認できる事実&lt;/div&gt;&lt;div style=&quot;&quot;&gt;・エラー種別や重要ログ行&lt;/div&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="160" width="320" x="280" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="hypo" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAFCFF;strokeColor=#006666;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;spacing=8;shadow=1;glass=0;arcSize=6;fontFamily=Helvetica;" value="&lt;font style=&quot;font-size: 21px;&quot;&gt;&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;Step 2: Hypotheses（仮説）&lt;br&gt;&lt;/font&gt;&lt;div style=&quot;&quot;&gt;&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;原因仮説を生成&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;・考えられるエラー原因&lt;/font&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;font style=&quot;color: rgb(0, 0, 0);&quot;&gt;・推論根拠と confidence&lt;/font&gt;&lt;/div&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="160" width="320" x="700" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="finalize" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4EA;strokeColor=#663300;fontSize=18;fontStyle=1;align=center;verticalAlign=middle;spacing=8;shadow=1;glass=0;arcSize=6;fontFamily=Helvetica;" value="&lt;font style=&quot;color: rgb(0, 0, 0); font-size: 21px;&quot;&gt;Step 3: Finalize（結論）&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(0, 0, 0); font-size: 21px;&quot;&gt;要約・推奨アクションを生成&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(0, 0, 0); font-size: 21px;&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(0, 0, 0); font-size: 21px;&quot;&gt;・障害内容の要約&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(0, 0, 0); font-size: 21px;&quot;&gt;・運用向け対応アクション&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="160" width="300" x="1116" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="f1" edge="1" parent="1" source="17" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=14;edgeStyle=orthogonalEdgeStyle;" target="facts" value="&lt;font&gt;log input&lt;/font&gt;">
+          <mxGeometry relative="1" x="0.0244" y="20" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="228" y="330" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f2" edge="1" parent="1" source="facts" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;" target="hypo" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;facts&lt;/font&gt;">
+          <mxGeometry relative="1" y="20" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="f3" edge="1" parent="1" source="hypo" style="endArrow=block;html=1;rounded=1;strokeWidth=2;dashed=0;strokeColor=#666666;fontSize=12;edgeStyle=orthogonalEdgeStyle;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="finalize" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;hypotheses&lt;/font&gt;">
+          <mxGeometry relative="1" x="0.0417" y="20" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="1060" y="330" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FFFFFF;fontSize=26;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="" vertex="1">
+          <mxGeometry height="10" width="910" x="206" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#FFFFFF;fontSize=26;fontStyle=1;align=center;verticalAlign=middle;spacing=8;" value="" vertex="1">
+          <mxGeometry height="230" width="10" x="1430" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="17" parent="1" style="sketch=0;pointerEvents=1;shadow=1;dashed=0;html=1;strokeColor=none;fillColor=#434445;aspect=fixed;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;align=center;outlineConnect=0;shape=mxgraph.vvd.log_files;" value="" vertex="1">
+          <mxGeometry height="120" width="96" x="100" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="18" parent="1" style="html=1;whiteSpace=wrap;strokeColor=none;fillColor=#FF8142;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;align=center;fontSize=12;outlineConnect=0;spacingTop=-6;fontColor=#FFFFFF;sketch=0;shape=mxgraph.sitemap.error;shadow=1;" value="Error" vertex="1">
+          <mxGeometry height="60" width="100" x="60" y="340" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
